@@ -114,7 +114,7 @@ void main(void)
 			lambertTerm = dot(N, -L);
 			
 			if (lambertTerm > uCutOff){			
-				finalColor += uLightDiffuse[i] * uMaterialDiffuse *lambertTerm; //Add diffuse component , one per light
+				finalColor += uLightDiffuse[i] * uMaterialDiffuse *lambertTerm; //Add diffuse component, one per light
 			}
 		}
 	
