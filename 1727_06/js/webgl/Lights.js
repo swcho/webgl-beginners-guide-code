@@ -1,19 +1,23 @@
-function Light(pos){
-	this.position = pos;
+function Light(name){
+	this.id = name;
+	this.position = [0.0,0.0,0.0];
 	this.ambient = [0.0,0.0,0.0,0.0];
 	this.diffuse = [0.0,0.0,0.0,0.0];
 	this.specular = [0.0,0.0,0.0,0.0];
 }
 
-Light.prototype.addDiffuse = function (d){
+Light.prototype.setPosition = function(p){
+	this.position = p.slice(0);
+}
+Light.prototype.setDiffuse = function (d){
 	this.diffuse = d.slice(0);
 }
 
-Light.prototype.addAmbient = function(a){
+Light.prototype.setAmbient = function(a){
 	this.ambient = a.slice(0);
 }
 
-Light.prototype.addSpecular = function(s){
+Light.prototype.setSpecular = function(s){
 	this.specular = s.slice(0);
 }
 
@@ -32,13 +36,21 @@ var Lights = {
 		for(var i = 0, max = this.list.length; i < max; i+=1){
 			a = a.concat(this.list[i][type]);
 		}
-		console.info(type+':'+a+'');
 		return a;
 	},
 
 	get: function(idx){
-		if (idx >= 0 && idx < this.list.length){
+		if ((typeof idx == 'number') && idx >= 0 && idx < this.list.length){
 			return this.list[idx];
+		}
+		else if (typeof idx == 'string'){
+			for(var i=0, max = this.list.length; i < max; i+=1){
+				if (this.list[i].id == idx) return this.list[i];
+			}
+			throw 'Light ' + idx + ' does not exist';
+		}
+		else {
+			throw 'Unknown parameter';
 		}
 	}
 }
