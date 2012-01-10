@@ -7,7 +7,7 @@ var Scene = {
         return null;
     },
 
-    loadObject : function(filename,alias,attributes){
+    loadObject : function(filename,alias,attributes,callback){
         var request = new XMLHttpRequest();
         console.info('Requesting ' + filename);
         request.open("GET",filename);
@@ -21,7 +21,7 @@ var Scene = {
                     var o = JSON.parse(request.responseText);
                     o.alias = (alias==null)?'none':alias;
                     o.remote = true;
-                    Scene.addObject(o,attributes);
+                    Scene.addObject(o,attributes,callback);
                 }
             }
         }
@@ -36,10 +36,9 @@ var Scene = {
         }
     },
     
-    addObject : function(object,attributes) {
+    addObject : function(object,attributes,callback) {
         
         //initialize with defaults
-        if (object.perVertexColor   === undefined)    {   object.perVertexColor   = false;            }
         if (object.wireframe        === undefined)    {   object.wireframe        = false;            }
         if (object.diffuse          === undefined)    {   object.diffuse          = [1.0,1.0,1.0,1.0];}
         if (object.ambient          === undefined)    {   object.ambient          = [0.1,0.1,0.1,1.0];}
@@ -47,10 +46,11 @@ var Scene = {
         
         //set attributes
        for(var key in attributes){
-            if(object.hasOwnProperty(key)) {object[key] = attributes[key];}
+            //if(object.hasOwnProperty(key)) {
+			object[key] = attributes[key];
+			//}
         }   
 
-    
         var vertexBufferObject = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferObject);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.vertices), gl.STATIC_DRAW);
@@ -59,12 +59,11 @@ var Scene = {
         gl.bindBuffer(gl.ARRAY_BUFFER, normalBufferObject);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(Utils.calculateNormals(object.vertices, object.indices)), gl.STATIC_DRAW);
     
-        var colorBufferObject;
-    
-       if (object.perVertexColor){
+       var colorBufferObject;
+       if (object.scalars){
             colorBufferObject = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, colorBufferObject);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.colors), gl.STATIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.scalars), gl.STATIC_DRAW);
             object.cbo = colorBufferObject;
         }
     
@@ -87,7 +86,18 @@ var Scene = {
          else {
             console.info(object.alias + ' has been added to the scene [Local]');
          }
+		 
+		 if (callback != undefined){
+			callback(object);
+		 }
     },
+	
+	
+	removeObject: function(objectName){
+		var o = this.getObject(objectName);
+		var idx = this.objects.indexOf(o);
+		this.objects.splice(idx,1);
+	},
 	
 	renderFirst: function(objectName){
 		var o = this.getObject(objectName);

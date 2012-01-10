@@ -21,6 +21,20 @@ Light.prototype.setSpecular = function(s){
 	this.specular = s.slice(0);
 }
 
+Light.prototype.setProperty = function(pName, pValue){
+	if(typeof pName == 'string'){
+		if (pValue instanceof Array){
+			this[pName] = pValue.slice(0);
+		}
+		else {
+			this[pName] = pValue;
+		}
+	}
+	else{
+		throw 'The property name must be a string';
+	}
+}
+
 var Lights = {
 	list : [],
 	add : function(light){
