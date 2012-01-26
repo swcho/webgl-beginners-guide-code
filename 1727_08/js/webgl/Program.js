@@ -78,5 +78,9 @@ var Program = {
 		for(var i=0, max = uniformList.length; i < max; i +=1){
 			this[uniformList[i]] = gl.getUniformLocation(prg, uniformList[i]);
 		}
-	}
+	},
+    
+    getUniform: function (uniformLocation){
+        return gl.getUniform(prg, uniformLocation);
+    }
 }

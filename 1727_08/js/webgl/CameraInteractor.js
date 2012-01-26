@@ -10,6 +10,7 @@ function CameraInteractor(camera,canvas){
     this.update();
     
     this.dragging = false;
+    this.picking = false;
     this.x = 0;
     this.y = 0;
     this.lastX = 0;
@@ -21,11 +22,50 @@ function CameraInteractor(camera,canvas){
     this.MOTION_FACTOR = 10.0;
     this.dloc = 0;
     this.dstep = 0;
+	
+	this.picker = null;
     
 }
 
+CameraInteractor.prototype.setPicker = function(p){
+	this.picker = p;
+}
+
+/**
+* Obtain screen coordinates
+*/
+CameraInteractor.prototype.get2DCoords = function(ev){
+	var x, y, top = 0, left = 0, obj = this.canvas;
+
+	while (obj && obj.tagName != 'BODY') {
+		top += obj.offsetTop;
+		left += obj.offsetLeft;
+		obj = obj.offsetParent;
+	}
+ 
+	// return relative mouse position
+	x = ev.clientX - left + window.pageXOffset;
+	y = this.canvas.clientHeight - (ev.clientY - top + window.pageYOffset);
+	
+	return {x:x,y:y};
+}
+
 CameraInteractor.prototype.onMouseUp = function(ev){
-    this.dragging = false;
+	var coords = this.get2DCoords(ev);
+	if (this.picker != null){
+		if (!this.picker.find(coords)){
+            this.picker.clear();
+            this.picking = false;
+             $('#title-id').html('Please select an object and drag it. (Alt key drags on the camera axis)');
+        }
+        else{
+            this.picking = true;
+            var count = this.picker.plist.length;
+            var message = count==1?count+' object has been selected': count+' objects have been selected';
+            $('#title-id').html(message);
+        }
+ 	}
+	this.dragging = false;
 }
 
 CameraInteractor.prototype.onMouseDown = function(ev){
@@ -43,13 +83,20 @@ CameraInteractor.prototype.onMouseMove = function(ev){
     this.y = ev.clientY;
 	
 	if (!this.dragging) return;
+		
+
 	this.ctrl = ev.ctrlKey;
 	this.alt = ev.altKey;
 	var dx = this.x - this.lastX;
 	var dy = this.y - this.lastY;
+    
+    if (this.picking){
+        this.picker.move(dx,dy, this.camera, this.alt != 0);
+        return;
+    }
 	
 	if (this.button == 0) { 
-		if(this.ctrl){
+		if(this.alt){
 			this.dolly(dy);
 		}
 		else{ 
@@ -85,7 +132,16 @@ CameraInteractor.prototype.onKeyDown = function(ev){
             if(fovy) fovy-=5;
             console.info('FovY:'+fovy);
         }
+        
 	}
+    else if (this.key == 80){
+            this.picking = !this.picking;
+            var mode = this.picking?'ON':'OFF';
+            console.info('Picking mode is ' + mode);
+            if (!this.picking){
+                this.picker.clear();
+            }
+        }
      
 }
 

@@ -41,7 +41,7 @@ var Scene = {
         //initialize with defaults
         if (object.wireframe        === undefined)    {   object.wireframe        = false;            }
         if (object.diffuse          === undefined)    {   object.diffuse          = [1.0,1.0,1.0,1.0];}
-        if (object.ambient          === undefined)    {   object.ambient          = [0.1,0.1,0.1,1.0];}
+        if (object.ambient          === undefined)    {   object.ambient          = [0.2,0.2,0.2,1.0];}
         if (object.specular         === undefined)    {   object.specular         = [1.0,1.0,1.0,1.0];}
         
         //set attributes
