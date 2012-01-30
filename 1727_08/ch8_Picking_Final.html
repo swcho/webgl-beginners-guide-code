@@ -90,6 +90,7 @@ uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
 uniform vec4 uMaterialAmbient;
 uniform vec4 uMaterialDiffuse;
+uniform vec4 uPickingColor;
 uniform bool uOffscreen;  
 
 uniform sampler2D uSampler;  
@@ -103,7 +104,7 @@ varying vec2 vTextureCoord;
 void main(void)
 {
     if(uOffscreen){
-        gl_FragColor = uMaterialDiffuse;
+        gl_FragColor = uPickingColor;
         return;
     }
     
@@ -165,10 +166,10 @@ function configure(){
     
     //Creates and sets up the camera location
     camera = new Camera(CAMERA_ORBITING_TYPE);
-    camera.goHome([0,0,40]);
+    camera.goHome([0,0,192]);
     camera.setFocus([0.0,0.0,0.0]);
-    camera.setElevation(-40);
-    camera.setAzimuth(-30);
+    camera.setElevation(-22);
+    camera.setAzimuth(37);
     camera.hookRenderer = render;
     
     
@@ -211,7 +212,8 @@ function configure(){
                     "uUseVertexColor",
                     "uOffscreen",
                     "uSampler",
-                    "uUseTextures"
+                    "uUseTextures",
+                    "uPickingColor"
                     ];
     
     
@@ -223,23 +225,49 @@ function configure(){
     gl.uniform1f(Program.uAlpha, 1.0);
 }
 
+function generatePosition(){    
+    var x = Math.floor(Math.random()*60);
+    var y = 0;
+    var z = Math.floor(Math.random()*60);
+    var flagX = Math.floor(Math.random()*10);
+    var flagZ = Math.floor(Math.random()*10);
+    
+    if (flagX >= 5) {x=-x;}
+    if (flagZ >= 5) {z=-z;}
+    return [x,y,z];
+}
+
 /**
 * Loads the scene
 */
 function load(){
-    Floor.build(80,2);
+    Floor.build(80,5);
+    Floor.pcolor = [0.0,0.0,0.0,1.0];
     Scene.addObject(Floor);
-    Scene.loadObject('models/geometry/ball.json',   'ball', {position:[  0, 0, -4],    scale:[3,3,3]});
-    Scene.loadObject('models/geometry/ball.json',   'disk',{position:[  -10, 0, -10], scale:[3,0.5,3],  diffuse:[0.3,0.1,0.9,0.5]});
-    Scene.loadObject('models/geometry/flag.json',   'flag', {position:[-10, 0 ,0],     scale:[1,1,1]});
-    Scene.loadObject('models/geometry/cone.json',   'cone', {position:[ 10, 0, 5],     scale:[1,1,1]});
-    Scene.loadObject('models/geometry/cone.json',   'cone2',{position:[ -7, 0, 2],     scale:[0.5,1,0.5], diffuse:[0.3,0.3,0.6,1.0]});
-    Scene.loadObject('models/geometry/texCube.json','cube', {position:[1,2,7],         scale:[4,4,4],     ambient:[0.4,0.4,0.4,1.0]});
+    var pos = [];   //position
+    var dif = [];   //diffuse color
+    var sca = [];   //scale
+    var pcol = [];  //picking color
+    var f = 1.0;    //factor
+    var type = 0;
+    for (var i = 0; i < 100; i++){
+        pos = generatePosition();
+        f = Math.random()+0.1; dif = [f, f, f, 1.0];
+        f = Math.random()+0.3; sca = [f, f, f];
+        pcol = [Math.random(), Math.random(),Math.random(),1.0];
+        type = Math.floor(Math.random()*2);
+        switch (type){
+            case 1: Scene.loadObject('models/geometry/sphere.json',   'ball_'+i, {position:pos,scale:sca, diffuse:dif, pcolor:pcol}); break;
+            case 0: Scene.loadObject('models/geometry/cylinder.json',   'cylinder_'+i, {position:pos,scale:sca, diffuse:dif, pcolor:pcol}); break;
+        }
+   }
 }
 
 
 
+
 function render(){
+
     //off-screen rendering
     gl.bindFramebuffer(gl.FRAMEBUFFER, picker.framebuffer);
     gl.uniform1i(Program.uOffscreen, true);
@@ -251,12 +279,12 @@ function render(){
 }
 
 function hitProperty(ob){
-    return ob.diffuse;
+    return ob.pcolor;
 }
 
 function addHit(ob){
  ob.previous = ob.diffuse.slice(0);     
- ob.diffuse[3] = 0.5;
+ ob.diffuse = ob.pcolor;
  render();
 }
 
@@ -267,14 +295,12 @@ function removeHit(ob){
 }
 
 function processHits(hits){
-    var names = '';
     for(var i = 0; i < hits.length; i++){
         var ob = hits[i];
         ob.diffuse = ob.previous;
-        names += ob.alias + ' ';
+        Scene.removeObject(ob.alias);
     }
     render();
-    alert('You picked: ' + names);
 }
 
 function movePickedObjects(interactor,dx,dy){
@@ -351,6 +377,7 @@ function draw() {
             gl.uniform4fv(Program.uMaterialDiffuse, object.diffuse);
             gl.uniform4fv(Program.uMaterialAmbient, object.ambient);
             gl.uniform1i(Program.uWireframe,object.wireframe);
+            gl.uniform4fv(Program.uPickingColor, object.pcolor);
             gl.uniform1i(Program.uUseVertexColor, false);
             gl.uniform1i(Program.uUseTextures, false);
             
@@ -476,17 +503,12 @@ $('#show-picking-btn').click(function(){
 
 $('#reset-btn').click(function(){
     
-    Scene.getObject('ball').position    = [  0,   0,  -4];
-    Scene.getObject('disk').position   = [-10,   0, -10];
-    Scene.getObject('flag').position    = [-10,   0 ,  0];
-    Scene.getObject('cone').position    = [ 10,   0,   5];
-    Scene.getObject('cone2').position   = [ -7,   0,   2];
-    Scene.getObject('cube').position    = [  1,   2,   7];
-    
-    camera.goHome();
-    camera.setElevation(-40);
-    camera.setAzimuth(-30);
-    
+    Scene.objects = [];
+    load();
+    camera.goHome([0,0,192]);
+    camera.setFocus([0.0,0.0,0.0]);
+    camera.setElevation(-22);
+    camera.setAzimuth(37);
     showPickingImage = false;
  }); 
 

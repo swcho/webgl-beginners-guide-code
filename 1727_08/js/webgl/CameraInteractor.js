@@ -42,30 +42,26 @@ CameraInteractor.prototype.get2DCoords = function(ev){
 		left += obj.offsetLeft;
 		obj = obj.offsetParent;
 	}
+    
+    left += window.pageXOffset;
+    top  += window.pageYOffset;
  
 	// return relative mouse position
-	x = ev.clientX - left + window.pageXOffset;
-	y = this.canvas.clientHeight - (ev.clientY - top + window.pageYOffset);
+	x = ev.clientX - left;
+	y = c_height - (ev.clientY - top); //c_height is a global variable that we maintain in codeview.js
+                                       //this variable contains the height of the canvas and it updates dynamically
+                                       //as we resize the browser window.
 	
 	return {x:x,y:y};
 }
 
 CameraInteractor.prototype.onMouseUp = function(ev){
-	var coords = this.get2DCoords(ev);
-	if (this.picker != null){
-		if (!this.picker.find(coords)){
-            this.picker.clear();
-            this.picking = false;
-             $('#title-id').html('Please select an object and drag it. (Alt key drags on the camera axis)');
-        }
-        else{
-            this.picking = true;
-            var count = this.picker.plist.length;
-            var message = count==1?count+' object has been selected': count+' objects have been selected';
-            $('#title-id').html(message);
-        }
- 	}
 	this.dragging = false;
+    
+    if (!ev.shiftKey){
+        this.picking = false;
+        this.picker.stop();
+    }
 }
 
 CameraInteractor.prototype.onMouseDown = function(ev){
@@ -74,6 +70,21 @@ CameraInteractor.prototype.onMouseDown = function(ev){
 	this.y = ev.clientY;
 	this.button = ev.button;
 	this.dstep = Math.max(this.camera.position[0],this.camera.position[1],this.camera.position[2])/100;
+    
+    if (this.picker == null) return;
+    
+    var coords = this.get2DCoords(ev);
+    this.picking = this.picker.find(coords);
+    
+    if (this.picking){
+        var count = this.picker.plist.length;
+        var message = count==1?count+' object has been selected': count+' objects have been selected';
+        $('#title-id').html(message);
+    }
+    else{
+        this.picker.stop();
+        $('#title-id').html('Please select an object and drag it. (Alt key drags on the camera axis)');
+    }
 }
 
 CameraInteractor.prototype.onMouseMove = function(ev){
@@ -90,8 +101,8 @@ CameraInteractor.prototype.onMouseMove = function(ev){
 	var dx = this.x - this.lastX;
 	var dy = this.y - this.lastY;
     
-    if (this.picking){
-        this.picker.move(dx,dy, this.camera, this.alt != 0);
+    if (this.picking && this.picker.moveCallback){
+        this.picker.moveCallback(this,dx,dy);
         return;
     }
 	
@@ -134,15 +145,6 @@ CameraInteractor.prototype.onKeyDown = function(ev){
         }
         
 	}
-    else if (this.key == 80){
-            this.picking = !this.picking;
-            var mode = this.picking?'ON':'OFF';
-            console.info('Picking mode is ' + mode);
-            if (!this.picking){
-                this.picker.clear();
-            }
-        }
-     
 }
 
 CameraInteractor.prototype.onKeyUp = function(ev){

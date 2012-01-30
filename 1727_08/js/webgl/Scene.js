@@ -75,6 +75,10 @@ var Scene = {
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(object.texture_coords), gl.STATIC_DRAW);
 			object.tbo = textureBufferObject;
 		}
+        
+        if (object.image){
+            object.texture = new Texture(object.image);
+        }
     
         var indexBufferObject = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObject);
