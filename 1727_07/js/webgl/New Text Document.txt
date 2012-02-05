@@ -5,6 +5,7 @@ function Texture(){
 	this.image.onload = function(){
 		self.handleLoadedTexture();
 	}
+
 }
 
 Texture.prototype.setImage = function(file){
@@ -14,10 +15,10 @@ Texture.prototype.setImage = function(file){
 Texture.prototype.handleLoadedTexture = function(){
 	console.info('loading image');
 	gl.bindTexture(gl.TEXTURE_2D, this.tex);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-    gl.generateMipmap(gl.TEXTURE_2D);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 	gl.bindTexture(gl.TEXTURE_2D, null);
 }
 

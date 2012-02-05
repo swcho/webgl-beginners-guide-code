@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title>WebGL Beginner's Guide - Chapter 7 - Using Textures On Objects</title>
+<title>WebGL Beginner's Guide - Chapter 7 - Texture Wrapping</title>
 <meta http-equiv='content-type' content='text/html; charset=ISO-8859-1'>
 
 <!-- CSS Styles //-->
@@ -36,67 +36,20 @@
 <script id="shader-vs" type="x-shader/x-vertex">
 //geometry
 attribute vec3 aVertexPosition;
-attribute vec3 aVertexNormal;
-attribute vec4 aVertexColor;
 attribute vec2 aVertexTextureCoords;
-
-uniform bool uUseVertexColor;
-uniform vec4 uMaterialDiffuse;
-uniform vec4 uMaterialAmbient;
-uniform float uAlpha;
 
 //matrices
 uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
 uniform mat4 uNMatrix;
 
-//lights
-uniform vec3 uLightPosition;
-uniform vec4 uLightAmbient;
-uniform vec4 uLightDiffuse;
-uniform bool uUseLambert;
-
 //varyings
-varying vec4 vColor;
 varying vec2 vTextureCoord;
 
-
 void main(void) {
-
- //Transformed vertex position
- vec4 vertex = uMVMatrix * vec4(aVertexPosition, 1.0);
- 
- float lambertTerm = 1.0;
-
- if (uUseLambert){
-	//Transformed normal position
-	vec3 normal = vec3(uNMatrix * vec4(aVertexNormal, 1.0));
- 
-	//light direction: pointing at the origin
-	vec3 lightDirection = normalize(-uLightPosition);
- 
-	//weighting factor
-	lambertTerm = max(dot(normal,-lightDirection),0.20);
- }
-
- //reading vertex color
- vec4 Ia = uLightAmbient * uMaterialAmbient;
- vec4 Id = vec4(0.0);
- 
- if (uUseVertexColor){
-	Id = uLightDiffuse * aVertexColor * lambertTerm;
- }
- else {
-	Id = uLightDiffuse * uMaterialDiffuse * lambertTerm;
- }
- 
- vColor = Ia + Id;
- vColor.a = uAlpha;
- 
- //Final vertex position
- gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
- vTextureCoord = aVertexTextureCoords;
-
+	//Final vertex position
+	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+	vTextureCoord = (aVertexTextureCoords * 3.0) - vec2(1.0, 1.0); // Multiplied by 3 to force the texture to wrap, subtract 1 to center the texture
 }	
 </script>
 
@@ -105,29 +58,15 @@ void main(void) {
 precision highp float;
 #endif
 
-//geometry
-uniform vec4 uMaterialDiffuse;
-uniform bool uWireframe;
+//sampler
 uniform sampler2D uSampler;
 
 //varying
-varying vec4 vColor;
 varying vec2 vTextureCoord;
 
 void main(void)
-{
-	//if(uWireframe){
-	//	gl_FragColor = uMaterialDiffuse;
-	//}
-	//else{
-    //	gl_FragColor = vColor;
-    //}
-	
-	gl_FragColor  = vColor *  texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
-	
-
-  
-
+{	
+	gl_FragColor = texture2D(uSampler, vTextureCoord);
 }
 </script>
 
@@ -144,14 +83,11 @@ function configure(){
     gl.clearDepth(100.0);
     gl.enable(gl.DEPTH_TEST);
 	gl.depthFunc(gl.LESS);
-	//gl.disable(gl.DEPTH_TEST);
-	//gl.enable(gl.BLEND);
-	//gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
     //Creates and sets up the camera location
     camera = new Camera(CAMERA_ORBITING_TYPE);
-    camera.goHome([0,0,4]);
+    camera.goHome([0,0,3]);
     camera.setFocus([0.0,0.0,0.0]);
 	camera.setAzimuth(45);
 	camera.setElevation(-30);
@@ -199,21 +135,15 @@ function configure(){
 	
 	//Init texture
 	texture = new Texture();
-	texture.setImage('webgl.gif');
-
+	texture.setImage('textures/webgl-marble.png');
 }
-
-
 
 /**
 * Loads the scene
 */
 function load(){
-	Scene.loadObject('models/geometry/texCube.json','cube');
+	Scene.loadObject('models/geometry/complexCube.json','cube2');
 }
-
-
-
 
 /**
 * invoked on every rendering cycle
@@ -294,7 +224,6 @@ function draw() {
     }
 }
 
-
 /**
 * Entry point. This function is invoked when the page is loaded
 */
@@ -312,7 +241,7 @@ function runWebGLApp() {
 <body onLoad='runWebGLApp()'>
 <div id='top'>
 <h1>WebGL Beginner's Guide - Chapter 7</h1>
-<h2>Using Textures in Objects</h2>
+<h2>Texture Wrapping</h2>
 <div id='logo-packt'><img src='packt.gif'/></div>
 <p></p>
 </div>
@@ -328,26 +257,34 @@ Your browser does not support the HTML5 canvas element.
 <div id='bottom'>
 <table style='padding=0px'>
 <tr>
-	<td>
-	<table id='coloring-table'>
-	<tr>
-	<td><input type="checkbox" id="lambert-btn" checked='checked' /><label for="lambert-btn">Use Lambert Term</label></td>
-	<td>
-	<div id='opt-type' >
-		<input type='radio' id='opt-constant' name='typecolor' checked='checked' /><label for='opt-constant'>Constant</label>
-		<input type='radio' id='opt-vertex' name='typecolor' /><label for='opt-vertex'>Per Vertex</label>
-    </div>
-	</td>
-	</tr>		
-	</table>
-	</td>
-</tr>	
+    <td> 
+    <table cellspacing=4px style='vertical-align:top'>
+        <tr>
+			<td>Wrap S:</td>
+            <td>
+            <div id='opt-s-wrap' align='center'>
+            	<input type='radio' id='s-clamp-to-edge' name='s-wrap' /><label for='s-clamp-to-edge'>CLAMP_TO_EDGE</label>
+				<input type='radio' id='s-repeat' name='s-wrap' checked='checked'/><label for='s-repeat'>REPEAT</label>
+				<input type='radio' id='s-mirrored-repeat' name='s-wrap' /><label for='s-mirrored-repeat'>MIRRORED_REPEAT</label>
+            </div>
+            </td>
+        </tr>
+    </table>
+    </td>
+</tr>
 <tr>
     <td> 
     <table cellspacing=4px style='vertical-align:top'>
-		<tr>
-			<td>Alpha Value:</td><td id='slider-alpha-value'>1.0</td><td width='150px'><div id='slider-alpha'/></td>
-		</tr>
+        <tr>
+			<td>Wrap T:</td>
+            <td>
+            <div id='opt-t-wrap' align='center'>
+            	<input type='radio' id='t-clamp-to-edge' name='t-wrap' /><label for='t-clamp-to-edge'>CLAMP_TO_EDGE</label>
+				<input type='radio' id='t-repeat' name='t-wrap' checked='checked'/><label for='t-repeat'>REPEAT</label>
+				<input type='radio' id='t-mirrored-repeat' name='t-wrap' /><label for='t-mirrored-repeat'>MIRRORED_REPEAT</label>
+            </div>
+            </td>
+        </tr>
     </table>
     </td>
 </tr>
@@ -355,34 +292,46 @@ Your browser does not support the HTML5 canvas element.
 </div>
 <script> 
 
+$('#opt-s-wrap').buttonset();
+$('#opt-t-wrap').buttonset();
 
-$('#slider-alpha').slider({value:1.0, min:0.0, max:1.01, step:0.05, slide:updateAlpha});
-
-function updateAlpha(){
-    var v = $('#slider-alpha').slider("value");
-    gl.uniform1f(Program.uAlpha, v);
-    $('#slider-alpha-value').html(v);
-	app.refresh();
-}
-
-
-$('#lambert-btn').button();
-$('#opt-type, #opt-cube').buttonset();
-
-$('#lambert-btn').click(function(){
-	gl.uniform1i(Program.uUseLambert, $('#lambert-btn').is(':checked'));
+$('#s-clamp-to-edge').click(function(){
+	gl.bindTexture(gl.TEXTURE_2D, texture.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.bindTexture(gl.TEXTURE_2D, null);
 });
 
-$('#opt-constant').click(function(){
-	useVertexColors = false;
-    app.refresh();
+$('#s-repeat').click(function(){
+	gl.bindTexture(gl.TEXTURE_2D, texture.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+	gl.bindTexture(gl.TEXTURE_2D, null);
 });
 
-$('#opt-vertex').click(function(){
-	useVertexColors = true;
-    app.refresh();
+$('#s-mirrored-repeat').click(function(){
+	gl.bindTexture(gl.TEXTURE_2D, texture.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+	gl.bindTexture(gl.TEXTURE_2D, null);
 });
 
+
+
+$('#t-clamp-to-edge').click(function(){
+	gl.bindTexture(gl.TEXTURE_2D, texture.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	gl.bindTexture(gl.TEXTURE_2D, null);
+});
+
+$('#t-repeat').click(function(){
+	gl.bindTexture(gl.TEXTURE_2D, texture.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+	gl.bindTexture(gl.TEXTURE_2D, null);
+});
+
+$('#t-mirrored-repeat').click(function(){
+	gl.bindTexture(gl.TEXTURE_2D, texture.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+	gl.bindTexture(gl.TEXTURE_2D, null);
+});
 
 
 </script>
