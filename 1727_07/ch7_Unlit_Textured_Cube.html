@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title>WebGL Beginner's Guide - Chapter 7 - Textured Cube</title>
+<title>WebGL Beginner's Guide - Chapter 7 - Sampling Textures</title>
 <meta http-equiv='content-type' content='text/html; charset=ISO-8859-1'>
 
 <!-- CSS Styles //-->
@@ -36,63 +36,20 @@
 <script id="shader-vs" type="x-shader/x-vertex">
 //geometry
 attribute vec3 aVertexPosition;
-attribute vec3 aVertexNormal;
-attribute vec4 aVertexColor;
-
-uniform bool uUseVertexColor;
-uniform vec4 uMaterialDiffuse;
-uniform vec4 uMaterialAmbient;
-uniform float uAlpha;
+attribute vec2 aVertexTextureCoords;
 
 //matrices
 uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
 uniform mat4 uNMatrix;
 
-//lights
-uniform vec3 uLightPosition;
-uniform vec4 uLightAmbient;
-uniform vec4 uLightDiffuse;
-uniform bool uUseLambert;
-
 //varyings
-varying vec4 vColor;
+varying vec2 vTextureCoord;
 
 void main(void) {
-
- //Transformed vertex position
- vec4 vertex = uMVMatrix * vec4(aVertexPosition, 1.0);
- 
- float lambertTerm = 1.0;
-
- if (uUseLambert){
-	//Transformed normal position
-	vec3 normal = vec3(uNMatrix * vec4(aVertexNormal, 1.0));
- 
-	//light direction: pointing at the origin
-	vec3 lightDirection = normalize(-uLightPosition);
- 
-	//weighting factor
-	lambertTerm = max(dot(normal,-lightDirection),0.20);
- }
-
- //reading vertex color
- vec4 Ia = uLightAmbient * uMaterialAmbient;
- vec4 Id = vec4(0.0);
- 
- if (uUseVertexColor){
-	Id = uLightDiffuse * aVertexColor * lambertTerm;
- }
- else {
-	Id = uLightDiffuse * uMaterialDiffuse * lambertTerm;
- }
- 
- vColor = Ia + Id;
- vColor.a = uAlpha;
- 
- //Final vertex position
- gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-
+	//Final vertex position
+	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+	vTextureCoord = aVertexTextureCoords * uNMatrix;
 }	
 </script>
 
@@ -101,17 +58,15 @@ void main(void) {
 precision highp float;
 #endif
 
-//geometry
-uniform vec4 uMaterialDiffuse;
-uniform bool uWireframe;
+//sampler
+uniform sampler2D uSampler;
 
 //varying
-varying vec4 vColor;
 varying vec2 vTextureCoord;
 
 void main(void)
 {	
-	gl_FragColor  = vColor;
+	gl_FragColor = texture2D(uSampler, vTextureCoord);
 }
 </script>
 
@@ -121,13 +76,14 @@ var camera = null;
 var interactor = null;
 var transforms = null;
 var useVertexColors = false;
+var texture = null;
 
 function configure(){
     gl.clearColor(0.3,0.3,0.3, 1.0);
     gl.clearDepth(100.0);
     gl.enable(gl.DEPTH_TEST);
 	gl.depthFunc(gl.LESS);
-	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
     //Creates and sets up the camera location
     camera = new Camera(CAMERA_ORBITING_TYPE);
@@ -149,7 +105,8 @@ function configure(){
 	//Program
 	attributeList = ["aVertexPosition",
 					"aVertexNormal",
-					"aVertexColor"];
+					"aVertexColor",
+					"aVertexTextureCoords"];
 
 	uniformList = [	"uPMatrix", 
 					"uMVMatrix", 
@@ -162,7 +119,8 @@ function configure(){
 					"uWireframe",
 					"uAlpha",
 					"uUseVertexColor",
-					"uUseLambert"
+					"uUseLambert",
+					"uSampler"
 					];
 	
 	
@@ -174,9 +132,20 @@ function configure(){
 	gl.uniform1f(Program.uAlpha, 1.0);
 	gl.uniform1i(Program.uUseVertexColor, useVertexColors);
 	gl.uniform1i(Program.uUseLambert, true);
+	
+	//Init texture
+	texture = gl.createTexture();
+	
+	var image = new Image();
+	image.onload = function(){
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.bindTexture(gl.TEXTURE_2D, null);
+	}
+	image.src = 'textures/webgl.png';
 }
-
-
 
 /**
 * Loads the scene
@@ -184,9 +153,6 @@ function configure(){
 function load(){
 	Scene.loadObject('models/geometry/complexCube.json','cube2');
 }
-
-
-
 
 /**
 * invoked on every rendering cycle
@@ -232,6 +198,16 @@ function draw() {
 				
 			}
 			
+			if (object.texture_coords){
+				gl.enableVertexAttribArray(Program.aVertexTextureCoords);
+				gl.bindBuffer(gl.ARRAY_BUFFER, object.tbo);
+				gl.vertexAttribPointer(Program.aVertexTextureCoords, 2, gl.FLOAT, false, 0, 0);
+				gl.activeTexture(gl.TEXTURE0);
+				gl.bindTexture(gl.TEXTURE_2D, texture);
+				gl.uniform1i(Program.uSampler, 0);
+			}
+			
+            
 			if(!object.wireframe){
 				gl.bindBuffer(gl.ARRAY_BUFFER, object.nbo);
 				gl.vertexAttribPointer(Program.aVertexNormal, 3, gl.FLOAT, false, 0, 0);
@@ -248,6 +224,7 @@ function draw() {
 			
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+            
         }
     }
     catch(err){
@@ -255,7 +232,6 @@ function draw() {
         console.error(err.description);
     }
 }
-
 
 /**
 * Entry point. This function is invoked when the page is loaded
@@ -274,7 +250,7 @@ function runWebGLApp() {
 <body onLoad='runWebGLApp()'>
 <div id='top'>
 <h1>WebGL Beginner's Guide - Chapter 7</h1>
-<h2>Textured Cube</h2>
+<h2>Sampling Textures</h2>
 <div id='logo-packt'><img src='packt.gif'/></div>
 <p></p>
 </div>
@@ -288,66 +264,9 @@ Your browser does not support the HTML5 canvas element.
 </div>
 
 <div id='bottom'>
-<table style='padding=0px'>
-<tr>
-	<td>
-	<table id='coloring-table'>
-	<tr>
-	<td><input type="checkbox" id="lambert-btn" checked='checked' /><label for="lambert-btn">Use Lambert Term</label></td>
-	<td>
-	<div id='opt-type' >
-		<input type='radio' id='opt-constant' name='typecolor' checked='checked' /><label for='opt-constant'>Constant</label>
-		<input type='radio' id='opt-vertex' name='typecolor' /><label for='opt-vertex'>Per Vertex</label>
-    </div>
-	</td>
-	</tr>		
-	</table>
-	</td>
-</tr>	
-<tr>
-    <td> 
-    <table cellspacing=4px style='vertical-align:top'>
-		<tr>
-			<td>Alpha Value:</td><td id='slider-alpha-value'>1.0</td><td width='150px'><div id='slider-alpha'/></td>
-		</tr>
-    </table>
-    </td>
-</tr>
-</table>
+
 </div>
-<script> 
 
-
-$('#slider-alpha').slider({value:1.0, min:0.0, max:1.01, step:0.05, slide:updateAlpha});
-
-function updateAlpha(){
-    var v = $('#slider-alpha').slider("value");
-    gl.uniform1f(Program.uAlpha, v);
-    $('#slider-alpha-value').html(v);
-	app.refresh();
-}
-
-
-$('#lambert-btn').button();
-$('#opt-type, #opt-cube').buttonset();
-
-$('#lambert-btn').click(function(){
-	gl.uniform1i(Program.uUseLambert, $('#lambert-btn').is(':checked'));
-});
-
-$('#opt-constant').click(function(){
-	useVertexColors = false;
-    app.refresh();
-});
-
-$('#opt-vertex').click(function(){
-	useVertexColors = true;
-    app.refresh();
-});
-
-
-
-</script>
 <script>cview.run(cview.MODE_VIEW,false,470);</script>
 </body>
 </html>
