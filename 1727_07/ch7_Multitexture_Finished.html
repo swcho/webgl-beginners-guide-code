@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title>WebGL Beginner's Guide - Chapter 7 - Sampling Textures</title>
+<title>WebGL Beginner's Guide - Chapter 7 - Mutlitexturing</title>
 <meta http-equiv='content-type' content='text/html; charset=ISO-8859-1'>
 
 <!-- CSS Styles //-->
@@ -31,8 +31,6 @@
 <script type='text/javascript' src='js/webgl/Texture.js'></script>
 <script type='text/javascript' src='js/webgl/WebGLApp.js'></script>
 
-
-
 <script id="shader-vs" type="x-shader/x-vertex">
 //geometry
 attribute vec3 aVertexPosition;
@@ -49,7 +47,7 @@ varying vec2 vTextureCoord;
 void main(void) {
 	//Final vertex position
 	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-	vTextureCoord = aVertexTextureCoords * uNMatrix;
+	vTextureCoord = aVertexTextureCoords;
 }	
 </script>
 
@@ -60,13 +58,14 @@ precision highp float;
 
 //sampler
 uniform sampler2D uSampler;
+uniform sampler2D uSampler2;
 
 //varying
 varying vec2 vTextureCoord;
 
 void main(void)
 {	
-	gl_FragColor = texture2D(uSampler, vTextureCoord);
+	gl_FragColor = texture2D(uSampler2, vTextureCoord) * texture2D(uSampler, vTextureCoord);
 }
 </script>
 
@@ -77,13 +76,15 @@ var interactor = null;
 var transforms = null;
 var useVertexColors = false;
 var texture = null;
+var texture2 = null;
 
 function configure(){
     gl.clearColor(0.3,0.3,0.3, 1.0);
     gl.clearDepth(100.0);
     gl.enable(gl.DEPTH_TEST);
 	gl.depthFunc(gl.LESS);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    
 
     //Creates and sets up the camera location
     camera = new Camera(CAMERA_ORBITING_TYPE);
@@ -120,7 +121,8 @@ function configure(){
 					"uAlpha",
 					"uUseVertexColor",
 					"uUseLambert",
-					"uSampler"
+					"uSampler",
+					"uSampler2"
 					];
 	
 	
@@ -133,19 +135,15 @@ function configure(){
 	gl.uniform1i(Program.uUseVertexColor, useVertexColors);
 	gl.uniform1i(Program.uUseLambert, true);
 	
-	//Init texture
-	texture = gl.createTexture();
+	//Init textures
+	texture = new Texture();
+	texture.setImage('textures/webgl.png');
 	
-	var image = new Image();
-	image.onload = function(){
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-		gl.bindTexture(gl.TEXTURE_2D, null);
-	}
-	image.src = 'textures/webgl.png';
+	texture2 = new Texture();
+	texture2.setImage('textures/light.png');
 }
+
+
 
 /**
 * Loads the scene
@@ -153,6 +151,9 @@ function configure(){
 function load(){
 	Scene.loadObject('models/geometry/complexCube.json','cube2');
 }
+
+
+
 
 /**
 * invoked on every rendering cycle
@@ -203,8 +204,12 @@ function draw() {
 				gl.bindBuffer(gl.ARRAY_BUFFER, object.tbo);
 				gl.vertexAttribPointer(Program.aVertexTextureCoords, 2, gl.FLOAT, false, 0, 0);
 				gl.activeTexture(gl.TEXTURE0);
-				gl.bindTexture(gl.TEXTURE_2D, texture);
+				gl.bindTexture(gl.TEXTURE_2D, texture.tex);
 				gl.uniform1i(Program.uSampler, 0);
+				
+				gl.activeTexture(gl.TEXTURE1);
+				gl.bindTexture(gl.TEXTURE_2D, texture2.tex);
+				gl.uniform1i(Program.uSampler2, 1);
 			}
 			
             
@@ -233,6 +238,7 @@ function draw() {
     }
 }
 
+
 /**
 * Entry point. This function is invoked when the page is loaded
 */
@@ -250,7 +256,7 @@ function runWebGLApp() {
 <body onLoad='runWebGLApp()'>
 <div id='top'>
 <h1>WebGL Beginner's Guide - Chapter 7</h1>
-<h2>Sampling Textures</h2>
+<h2>Multitexture</h2>
 <div id='logo-packt'><img src='packt.gif'/></div>
 <p></p>
 </div>
