@@ -54,16 +54,17 @@ uniform float uTime;
 uniform vec2 uInverseTextureSize;
 
 vec3 lightDir = normalize( vec3(0.5, 0.5, 0.5) );
-vec3 eyePos = vec3( 0.0, 1.0, 4.0 );
+vec3 eyePos = vec3(0.0, 1.0, 4.0);
 vec3 bgColor = vec3(0.2, 0.2, 0.2);
 
 vec3 ambient = vec3(0.05, 0.1, 0.1);
 
-vec4 sph1 = vec4( 0.0, 1.0, 0.0, 1.0);
-vec3 sph1Color = vec3( 0.9, 0.8, 0.6);
+vec4 sphere1 = vec4(0.0, 1.0, 0.0, 1.0);
+vec3 sphere1Color = vec3(0.9, 0.8, 0.6);
 
 float maxDist = 1024.0;
 
+// ro is the ray origin, rd is the ray direction, and s is the sphere
 float sphereInter( vec3 ro, vec3 rd, vec4 s ) {
     // Transform the ray into object space
     vec3 oro = ro - s.xyz;
@@ -85,20 +86,18 @@ vec3 sphereNorm( vec3 pt, vec4 s ) {
 
 float intersect( vec3 ro, vec3 rd, out vec3 norm, out vec3 color ) {
     float t = maxDist;
-    float id = -1.0;
-    float tmin = -1.0;
 
     // If we wanted multiple objects in the scene you would loop through them here
     // and return the normal and color with the closest intersection point (lowest t)
 
-    float ot = sphereInter( ro, rd, sph1 ); 
+    float ot = sphereInter( ro, rd, sphere1 ); 
     
     if ( ot > 0.0 && ot < t ) {
         t = ot;
 
         vec3 pt = ro + t * rd; // Point of intersection
-        norm = sphereNorm(pt, sph1); // Get normal for that point
-        color = sph1Color; // Get color for the sphere
+        norm = sphereNorm(pt, sphere1); // Get normal for that point
+        color = sphere1Color; // Get color for the sphere
     }
 
     return t;
@@ -110,8 +109,8 @@ void main( void ) {
     float aspectRatio = uInverseTextureSize.y/uInverseTextureSize.x;
     
     // Wiggle the sphere back and forth a bit
-    sph1.x = 1.5 * sin(uTime);
-    sph1.z = 0.5 * cos(uTime * 3.0);
+    sphere1.x = 1.5 * sin(uTime);
+    sphere1.z = 0.5 * cos(uTime * 3.0);
     
     // Cast a ray out from the eye position into the scene
     vec3 ro = eyePos;
@@ -182,21 +181,12 @@ function load(){
 function render(){
     gl.viewport(0, 0, c_width, c_height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    transforms.updatePerspective();
-    try{
-        transforms.calculateModelView();
-        transforms.setMatrixUniforms();
-    }
-    catch(err){
-        alert(err);
-        console.error(err.description);
-    }
 
     // Checks to see if the framebuffer needs to be resized to match the canvas
     post.validateSize();
     post.bind();
 
-    //Re-render scene from framebuffer with post process effect
+    //Render the fullscreen quad
     post.draw();
 }
 
