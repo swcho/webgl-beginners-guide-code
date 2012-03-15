@@ -11,12 +11,13 @@
 		function getGLContext(){
 			var canvas = document.getElementById("canvas-element-id");
 			if (canvas == null){
-				alert('there is no canvas on this page');
+				alert("there is no canvas on this page");
 				return;
 			}
 				
 			try{
-				gl = canvas.getContext("experimental-webgl");
+				gl = canvas.getContext("webgl") ||                                                            
+                     canvas.getContext("experimental-webgl"); 
 			}
 			catch(e){
 				alert(e);
@@ -31,7 +32,7 @@
 		}
 	 </script>
 </head>
-<body onLoad='getGLContext()'>
+<body onLoad="getGLContext()">
 <canvas id="canvas-element-id" width="800" height="600">
 Your browser does not support the HTML5 canvas element.
 </canvas>

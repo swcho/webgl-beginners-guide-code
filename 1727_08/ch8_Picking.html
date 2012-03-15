@@ -218,7 +218,7 @@ function configure(){
     Program.load(attributeList, uniformList);
     
     gl.uniform3fv(Program.uLightPosition,   [0,5,20]);
-    gl.uniform3fv(Program.uLightAmbient,    [1.0,1.0,1.0,1.0]);
+    gl.uniform4fv(Program.uLightAmbient,    [0.0,0.0,0.0,1.0]);
     gl.uniform4fv(Program.uLightDiffuse,    [1.0,1.0,1.0,1.0]);
     gl.uniform1f(Program.uAlpha, 1.0);
 }

@@ -25,10 +25,10 @@
 				break;
 			}
 			case 51:{ // 3
-				var colour = gl.getParameter(gl.COLOR_CLEAR_VALUE);
+				var color = gl.getParameter(gl.COLOR_CLEAR_VALUE);
 				
 				//Don't get confused with the following line. It basically rounds up the numbers to one decimal cipher just for visualization purposes
-				alert('clearColor = (' + Math.round(colour[0]*10)/10 + ',' +Math.round(colour[1]*10)/10+','+Math.round(colour[2]*10)/10+')');
+				alert('clearColor = (' + Math.round(color[0]*10)/10 + ',' +Math.round(color[1]*10)/10+','+Math.round(color[2]*10)/10+')');
 				window.focus();
 				break;
 			}
@@ -49,7 +49,8 @@
 			}
 				
 			try{
-				ctx = canvas.getContext("experimental-webgl");
+				ctx = canvas.getContext("webgl") ||                                                            
+                     canvas.getContext("experimental-webgl"); 
 			}
 			catch(e){
 				alert(e);
@@ -58,13 +59,13 @@
 			if (!ctx){
 				alert("WebGL is not available");
 			}
-			else{
-				return ctx;
-			}
+			
+			return ctx;
+			
 		}
 		
 		function clear(ctx){
-			ctx.clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT);
+			ctx.clear(ctx.COLOR_BUFFER_BIT);
 			ctx.viewport(0,0,c_width, c_height);
 		}
 		
