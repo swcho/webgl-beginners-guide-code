@@ -90,15 +90,20 @@ function initProgram() {
 */
 function loadModel(filename){
     var request = new XMLHttpRequest();
-
+    var resource = "http://"+document.domain+ filename
     request.open("GET",filename);
     request.onreadystatechange = function() {
+        console.info(request.readyState +' - '+request.status); 
       if (request.readyState == 4) {
-	    if(request.status == 404) {
-			alert (filename + ' does not exist');
-		 }
-		else {
+	    if(request.status == 200) { //OK
 			handleLoadedModel(filename,JSON.parse(request.responseText));
+		 }
+		else if (document.domain.length == 0 && request.status == 0){ //OK but local, no web server
+            handleLoadedModel(filename,JSON.parse(request.responseText));
+        }
+        else{
+            alert ('There was a problem loading the file :' + filename);
+            alert ('HTML error code: ' + request.status);
 		}
 	  }
     }

@@ -149,13 +149,17 @@ function initBuffers() {
     
     //We can call isBuffer at any point (even if there is no buffer bound), because isBuffer only checks on the type of the object 
     //i.e. Is the object a WebGL buffer or not.
-    if (gl.isBuffer(vertices)){
-        is_vertices_vbo = "Yes"
+    try{
+        if (gl.isBuffer(vertices)){
+            is_vertices_vbo = "Yes"
+        }
+        else{
+            is_vertices_vbo = "Invalid"; //isBuffer returns false if the buffer invalidated flag is set
+        }
     }
-    else{
+    catch(e){
         is_vertices_vbo = "No";
     }
-    
     if (gl.isBuffer(coneVertexBuffer)){
         is_coneVertexBuffer_vbo = "Yes"
     }

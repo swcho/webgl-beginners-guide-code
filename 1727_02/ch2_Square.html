@@ -9,7 +9,6 @@
 <link href='css/smoothness/jquery-ui-1.8.13.custom.css' type='text/css' rel='stylesheet' />
 
 <!-- JavaScript Libraries //-->
-<script type='text/javascript' src='js/glMatrix-0.9.5.min.js'></script>
 <script type='text/javascript' src='js/jquery-1.5.1.min.js'></script>
 <script type='text/javascript' src='js/jquery-ui-1.8.13.custom.min.js'></script> 
 <script type='text/javascript' src='js/prettify.js'></script>
@@ -31,11 +30,8 @@
 <script id="shader-vs" type="x-shader/x-vertex">
 	attribute vec3 aVertexPosition;
 
-	uniform mat4 uMVMatrix;
-	uniform mat4 uPMatrix;
-
 	void main(void) {
-		gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+		gl_Position = vec4(aVertexPosition,1.0); 
 	}
 </script>
 
@@ -51,8 +47,6 @@
 	var indices = []; //JavaScript array to store the indices of the square
 	var vertices = []; //JavaScript array to store the vertices of the square
 	
-	var mvMatrix = mat4.create(); // The Model-View matrix
-	var pMatrix = mat4.create(); // The projection matrix
 
 	/*
 	* The program contains a series of instructions that tell the Graphic Processing Unit (GPU)
@@ -77,29 +71,29 @@
 		//The following lines allow us obtaining a reference to the uniforms and attributes defined in the shaders.
 		//This is a necessary step as the shaders are NOT written in JavaScript but in a 
 		//specialized language called GLSL. More about this on chapter 3.
-		prg.vertexPositionAttribute = gl.getAttribLocation(prg, "aVertexPosition");
-		prg.pMatrixUniform = gl.getUniformLocation(prg, "uPMatrix");
-		prg.mvMatrixUniform = gl.getUniformLocation(prg, "uMVMatrix");
-		prg.uFragmentColor = gl.getUniformLocation(prg, "uFragmentColor");
+		prg.vertexPosition = gl.getAttribLocation(prg, "aVertexPosition");
+	
 	}		
 	
 	/*
 	* Creates the buffers that contain the geometry of the square
 	*
-	*   #0 (-50,50) +--------------+  (50,50)  #3
+	*   #0 (-0.5,0.5) +--------------+  (0.5,0.5)  #3
 	*               |              |
 	*               |              |
 	*               |      .(0,0)  |
 	*               |              |
 	*               |              | 
-	*   #1(-50,-50) +--------------+  (50,-50) #2
+	*   #1(-0.5,-0.5) +--------------+  (0.5,-0.5) #2
 	*/
 	function initBuffers() {
-		vertices =  [
-		-50.0,50.0,0.0, 	//Vertex 0
-		-50.0,-50.0,0.0, 	//Vertex 1
-		50.0,-50.0,0.0, 	//Vertex 2
-		50.0,50.0,0.0]; 	//Vertex 3
+		
+        
+        vertices =  [
+		-0.5,0.5,0.0, 	//Vertex 0
+		-0.5,-0.5,0.0, 	//Vertex 1
+		0.5,-0.5,0.0, 	//Vertex 2
+		0.5,0.5,0.0]; 	//Vertex 3
 
 		indices = [3,2,1,3,1,0];
 		
@@ -126,16 +120,9 @@
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		gl.viewport(0,0,c_width, c_height);
 		
-		mat4.perspective(45, c_width / c_height, 0.1, 10000.0, pMatrix);
-		gl.uniformMatrix4fv(prg.pMatrixUniform, false, pMatrix);
-		
-		mat4.identity(mvMatrix);	
-		mat4.translate(mvMatrix, [0.0, 0.0, -160.0]); //Sets the camera to a reasonable distance to view the square
-		gl.uniformMatrix4fv(prg.mvMatrixUniform, false, mvMatrix);
-				
 		gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexBuffer);
 		gl.vertexAttribPointer(prg.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(prg.vertexPositionAttribute);
+		gl.enableVertexAttribArray(prg.vertexPosition);
 		
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, squareIndexBuffer);
 		gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT,0);
