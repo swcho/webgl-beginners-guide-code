@@ -1,16 +1,16 @@
 #header
 {
-	height: 50px;
-	background-color: #ccc;
+	height: 80px;
+	background-color: #fff;
 	margin-bottom: 10px;
 }
 
 #nav
 {
 	float: left;
-	width: 28%;
+	width: 29%;
 	height: 80%;
-	background-color: #ccc;
+	background-color: #fff;
 	margin-bottom: 1px;
 }
 

@@ -36,7 +36,9 @@ WebGLApp.prototype.run = function(){
  }
      
 renderLoop = function(){
-     WEBGLAPP_TIMER_ID = setInterval(WEBGLAPP_RENDER, WEBGLAPP_RENDER_RATE);
+    if(WEBGLAPP_RENDER){
+        WEBGLAPP_TIMER_ID = setInterval(WEBGLAPP_RENDER, WEBGLAPP_RENDER_RATE);
+     }
 }
 
 window.onblur = function(){

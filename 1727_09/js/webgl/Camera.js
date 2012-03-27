@@ -21,6 +21,10 @@ function Camera(t){
       
     this.hookRenderer = null;
     this.hookGUIUpdate = null;
+    
+    this.FOV = 30;
+    this.minZ = 0.1;
+    this.maxZ = 10000
 }
 
 Camera.prototype.setType = function(t){
@@ -78,8 +82,40 @@ Camera.prototype.setPosition = function(p){
     this.update();
 }
 
+//This operation consists in aligning the normal to the focus vector
 Camera.prototype.setFocus = function(f){
 	vec3.set(f, this.focus);
+    
+    // var n = vec3.create(); 
+    // vec3.set(this.normal,n);
+    // var n_floor = vec3.create(); 
+    // vec3.set(this.normal, n_floor);
+    // n_floor[1] = 0; //projecting vector on floor
+    
+    // vec3.normalize(n);
+    // vec3.normalize(n_floor);
+    // var angle = Math.acos(vec3.dot(n, n_floor)) * 180 / Math.PI;
+    
+    
+    // var f = vec3.create(); vec3.set(this.focus,f);
+    // var p = vec3.create(); vec3.set(this.position,p);
+    
+    // var los = vec3.create(); //los : line of sight
+    // vec3.subtract(p,f,los);
+    // var los_floor = vec3.create();
+    // vec3.set(los, los_floor);
+    // los_floor[1] = 0;
+    // vec3.normalize(los);
+    // vec3.normalize(los_floor);
+    // var angle_los = Math.acos(vec3.dot(los, los_floor)) * 180 / Math.PI;
+    
+    
+    // console.info('elevation of line of sight :' + angle_los);
+    
+    // var chElevation = angle  - angle_los;
+    
+    // this.setElevation(chElevation);
+    
 	this.update();
 }
 

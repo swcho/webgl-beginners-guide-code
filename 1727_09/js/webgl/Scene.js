@@ -19,7 +19,9 @@ var Scene = {
                 }
                 else {
                     var o = JSON.parse(request.responseText);
-                    o.alias = (alias==null)?'none':alias;
+                    if (alias == null && o.alias == null){
+                        o.alias = 'undefined'
+                    }
                     o.remote = true;
                     Scene.addObject(o,attributes,callback);
                 }

@@ -22,9 +22,10 @@ SceneTransforms.prototype.calculateNormal = function(){
 };
 
 SceneTransforms.prototype.calculatePerspective = function(){
+    var c = this.camera;
 	//Initialize Perspective matrix
     mat4.identity(this.pMatrix);
-    mat4.perspective(30, c_width / c_height, 0.1, 1000.0, this.pMatrix);
+    mat4.perspective(c.FOV, c_width / c_height, c.minZ, c.maxZ, this.pMatrix);
 };
 
 
@@ -39,7 +40,8 @@ SceneTransforms.prototype.init = function(){
 
 
 SceneTransforms.prototype.updatePerspective = function(){
-    mat4.perspective(30, c_width / c_height, 0.1, 1000.0, this.pMatrix);  // We can resize the screen at any point so the perspective matrix should be updated always.
+    var c = this.camera;
+    mat4.perspective(c.FOV, c_width / c_height, c.minZ, c.maxZ, this.pMatrix);  // We can resize the screen at any point so the perspective matrix should be updated always.
 };
 
 
