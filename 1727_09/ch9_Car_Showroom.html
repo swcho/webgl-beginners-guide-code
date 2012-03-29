@@ -161,8 +161,8 @@ light3 = null,
 light4 = null,
 transforms = null,
 
-cameraHome = [0,0,7],
-cameraAzimuth = 24,
+cameraHome = [0.0,0.4,7],
+cameraAzimuth = 25,
 cameraElevation = -11,
 carSurface = undefined,
 floorVisible = false,
@@ -278,6 +278,12 @@ function loadBMW(){
     }
 }
 
+function loadSphere(){
+    Scene.objects = [];
+    Scene.addObject(Floor);
+    Scene.loadObject('models/sphere.json','sphere');
+}
+
 function loadMustang(){
     Scene.objects = [];
     Scene.addObject(Floor);
@@ -288,8 +294,14 @@ function loadMustang(){
    
 }
 
-
-
+function loadBMWV3(){
+    Scene.objects = [];
+    Scene.addObject(Floor);
+    Scene.loadObject('models/cars/bmw/part5.json','world');
+    for(var i = 1; i <= 62; i++){
+        Scene.loadObject('models/cars/bmwv3/part'+i+'.json');
+    }    
+}
 
 function loadAudi(){
     Scene.objects = [];
@@ -308,14 +320,7 @@ function loadLamborghini(){
     }
 }
 
-function loadBMWV3(){
-    Scene.objects = [];
-    Scene.addObject(Floor);
-    Scene.loadObject('models/cars/bmw/part5.json','world');
-    for(var i = 1; i <= 41; i++){
-        Scene.loadObject('models/cars/bmwv3/part'+i+'.json');
-    }    
-}
+
 
 
 
