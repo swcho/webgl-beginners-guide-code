@@ -79,9 +79,7 @@ void main(void) {
 </script>
 
 <script id="shader-fs" type="x-shader/x-fragment">
-#ifdef GL_ES
 precision highp float;
-#endif
 
 uniform bool uWireframe;
 uniform bool uUseTextures; 
@@ -148,21 +146,19 @@ void main(void)
 </script>
 
 <script id="post-common-vs" type="x-shader/x-vertex">
-attribute vec3 aVertexPosition;
+attribute vec2 aVertexPosition;
 attribute vec2 aVertexTextureCoords;
 
 varying vec2 vTextureCoord;
 
 void main(void) {
     vTextureCoord = aVertexTextureCoords;
-    gl_Position = vec4(aVertexPosition, 1.0);
+    gl_Position = vec4(aVertexPosition, 0.0, 1.0);
 }
 </script>
 
-<script id="post-greyscale" type="x-shader/x-fragment">
-#ifdef GL_ES
+<script id="post-normal" type="x-shader/x-fragment">
 precision highp float;
-#endif
 
 uniform sampler2D uSampler;
 
@@ -171,15 +167,27 @@ varying vec2 vTextureCoord;
 void main(void)
 {
     vec4 frameColor = texture2D(uSampler, vTextureCoord);
-    float brightness = (frameColor.r + frameColor.g + frameColor.b)/3.0;
-    gl_FragColor = vec4(brightness, brightness, brightness, frameColor.a);
+    gl_FragColor = frameColor;
+}
+</script>
+
+<script id="post-greyscale" type="x-shader/x-fragment">
+precision highp float;
+
+uniform sampler2D uSampler;
+
+varying vec2 vTextureCoord;
+
+void main(void)
+{
+    vec4 frameColor = texture2D(uSampler, vTextureCoord);
+    float luminance = frameColor.r * 0.3 + frameColor.g * 0.59 + frameColor.b * 0.11;
+    gl_FragColor = vec4(luminance, luminance, luminance, frameColor.a);
 }
 </script>
 
 <script id="post-invert" type="x-shader/x-fragment">
-#ifdef GL_ES
 precision highp float;
-#endif
 
 uniform sampler2D uSampler;
 
@@ -193,9 +201,7 @@ void main(void)
 </script>
 
 <script id="post-blur" type="x-shader/x-fragment">
-#ifdef GL_ES
 precision highp float;
-#endif
 
 uniform sampler2D uSampler;
 uniform vec2 uInverseTextureSize;
@@ -208,9 +214,7 @@ vec4 offsetLookup(float xOff, float yOff) {
 
 void main(void)
 {
-    vec4 frameColor;
-
-    frameColor += offsetLookup(-4.0, 0.0) * 0.05;
+    vec4 frameColor = offsetLookup(-4.0, 0.0) * 0.05;
     frameColor += offsetLookup(-3.0, 0.0) * 0.09;
     frameColor += offsetLookup(-2.0, 0.0) * 0.12;
     frameColor += offsetLookup(-1.0, 0.0) * 0.15;
@@ -225,19 +229,18 @@ void main(void)
 </script>
 
 <script id="post-wavy" type="x-shader/x-fragment">
-#ifdef GL_ES
 precision highp float;
-#endif
 
 uniform sampler2D uSampler;
 uniform float uTime;
 
 varying vec2 vTextureCoord;
 
+const float speed = 15.0;
+const float magnitude = 0.015;
+
 void main(void)
 {
-    float speed = 15.0;
-    float magnitude = 0.015;
     vec2 wavyCoord;
     wavyCoord.s = vTextureCoord.s + (sin(uTime+vTextureCoord.t*speed) * magnitude);
     wavyCoord.t = vTextureCoord.t + (cos(uTime+vTextureCoord.s*speed) * magnitude);
@@ -247,9 +250,7 @@ void main(void)
 </script>
 
 <script id="post-filmgrain" type="x-shader/x-fragment">
-#ifdef GL_ES
 precision highp float;
-#endif
 
 uniform sampler2D uSampler;
 uniform sampler2D uNoiseSampler;
@@ -258,11 +259,13 @@ uniform float uTime;
 
 varying vec2 vTextureCoord;
 
+const float grainIntensity = 0.1;
+const float scrollSpeed = 4000.0;
+
 void main(void)
 {
-    float grainIntensity = 0.1;
     vec4 frameColor = texture2D(uSampler, vTextureCoord);
-    vec4 grain = texture2D(uNoiseSampler, vTextureCoord * 2.0 + uTime * 4082.0 * uInverseTextureSize);
+    vec4 grain = texture2D(uNoiseSampler, vTextureCoord * 2.0 + uTime * scrollSpeed * uInverseTextureSize);
     gl_FragColor = frameColor - (grain * grainIntensity);
 }
 </script>
@@ -296,7 +299,7 @@ function configure(){
     var canvas  = document.getElementById('canvas-element-id');
     
     //Post Process
-    post = new PostProcess(canvas, "post-greyscale");
+    post = new PostProcess(canvas, "post-normal");
 
     // Noise texture, for use in the "film grain" post process effect
     noiseTexture = new Texture();
@@ -514,7 +517,8 @@ Your browser does not support the HTML5 canvas element.
             <td>Filter:</td>
             <td>
             <div id='opt-filter' align='center'>
-                <input type='radio' id='filter-greyscale' name='filter' checked='checked'/><label for='filter-greyscale'>Greyscale</label>
+                <input type='radio' id='filter-normal' name='filter' checked='checked'/><label for='filter-normal'>Normal</label>
+                <input type='radio' id='filter-greyscale' name='filter'/><label for='filter-greyscale'>Greyscale</label>
                 <input type='radio' id='filter-invert' name='filter' /><label for='filter-invert'>Invert</label>
                 <input type='radio' id='filter-wavy' name='filter' /><label for='filter-wavy'>Wavy</label>
                 <input type='radio' id='filter-blur' name='filter' /><label for='filter-blur'>Blur</label>
@@ -529,6 +533,10 @@ Your browser does not support the HTML5 canvas element.
 <script> 
 
 $('#opt-filter').buttonset();
+
+$('#filter-normal').click(function(){
+    post.configureShader("post-normal");
+});
 
 $('#filter-greyscale').click(function(){
     post.configureShader("post-greyscale");
