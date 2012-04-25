@@ -272,6 +272,11 @@ var dx_sphere = 0.1;
 var dx_cone = 0.15;
 var pos_sphere = 0;
 var pos_cone = 0;
+
+var frequency = 5; 
+var elapsedTime = undefined;
+var initialTime = undefined;
+
 function animate(){
 	pos_sphere += dx_sphere;
     if (pos_sphere >= 30 || pos_sphere <=-30){
@@ -285,8 +290,21 @@ function animate(){
 	draw();
 }
 
+function onFrame(){
+    elapsedTime = (new Date).getTime() - initialTime;
+    if (elapsedTime < frequency) return; //come back later!
+    
+    var steps = Math.floor(elapsedTime / frequency);
+    while(steps > 0){
+        animate();
+        steps -= 1;
+    }
+    initialTime = (new Date).getTime();
+}
+
 function startAnimation(){
-	setInterval(animate,30/1000);
+    initialTime = (new Date).getTime();
+	setInterval(onFrame,frequency/1000);
 }
 
 

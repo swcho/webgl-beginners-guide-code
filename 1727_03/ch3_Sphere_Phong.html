@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title>WebGL Beginner's Guide - Chapter 3 - Phong Lighting</title>
+<title>WebGL Beginner's Guide - Chapter 3 - Phong Shading + Phong Lighting</title>
 <meta http-equiv='content-type' content='text/html; charset=ISO-8859-1'>
 
 <!-- CSS Styles //-->
@@ -284,7 +284,7 @@ function runWebGLApp() {
 <body onLoad='runWebGLApp()'>
 <div id='top'>
  <h1>WebGL Beginner's Guide - Chapter 3</h1>
- <h2>Phong Lighting</h2>
+ <h2>Phong Shading + Phong Lighting</h2>
  <div id='logo-packt'><img src='packt.gif'/></div>
 </div>
 
@@ -335,7 +335,7 @@ function runWebGLApp() {
 <li><b>Id</b>: diffuse term</li>
 <li><b>Is</b>: specular term</li>
 </ul>
-<p>Unlike the Goraud model that calculates a final color per-vertex, the Phong model calculates a final color per-pixel.</p>
+<p>Unlike the Goraud interpolation that calculates a final color per-vertex, the Phong interpolation calculates a final color per-pixel.</p>
 <p>If you explore the source code for the Vertex Shader and the Fragment Shader you will see that the heavy processing 
 occurs this time in the fragment shader</p>
 <p>For the sake of simplicity we have omitted the Light Specular property

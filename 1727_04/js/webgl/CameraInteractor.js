@@ -73,12 +73,12 @@ CameraInteractor.prototype.onKeyDown = function(ev){
 		else if (this.key == 39){
 			c.changeAzimuth(10);
 		}
-        else if (this.key == 87) {  //w
-            if(fovy) fovy+=5;
+        else if (this.key == 87) {  //w -wide
+            if(fovy < 120) fovy+=5;
             console.info('FovY:'+fovy);
         }
-        else if (this.key == 78) { //n
-            if(fovy) fovy-=5;
+        else if (this.key == 78) { //n - narrow
+            if(fovy >15 ) fovy-=5;
             console.info('FovY:'+fovy);
         }
 	}

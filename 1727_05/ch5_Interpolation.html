@@ -152,7 +152,7 @@ var camera = null;
 var interactor = null;
 var transforms = null;
 
-var SCENE_TIME = 0.0;
+var sceneTime = 0.0;
 
 var CONTROL_POINTS = [[-25,0,20],[-40,0,-10],[0,0,10],[25,0,-5],[40,0,-20]];
 var ISTEPS = 1000;
@@ -234,30 +234,32 @@ function doBSplineInterpolation(){
     
     position = [];
     
-    var N = CONTROL_POINTS.length;
-    var K = 3; 
+    var N = CONTROL_POINTS.length - 1;
+    var P = 3;  //Degree
     var U = []; //Knot Vector
+    var M = N + P + 1; //number of elements in the knot vector
+    var deltaKnot = 1/(M-(2*P));
     
-    var T = N + K + 1; //number of elements in the knot vector
-    var dT = 1/(T-(2*K)+1);
-    
-    //Creating the knot vector:
+    //Creating the knot vector (clamped):
     //http://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/node17.html
-    for (var i = 0; i < K; i++){
+    for (var i = 0; i <= P; i++){
         U.push(0);
     }
     
-    var v = dT;
-    for (var i = K; i< T-K; i++){
+    var v = deltaKnot;
+    for (var i = P+1; i< M-P+1; i++){
         U.push(v);
-        v += dT;
+        v += deltaKnot;
     }
     
-    for (var i = T-K; i< T; i++){
+    for (var i = M-P+1; i<= M; i++){
         U.push(1);
     }
+	
+	
         
-    var Bo = function(i,u){
+    // Bo function
+	function No(u,i){
         if (U[i] <= u && u < U[i+1]){
             return 1;
         }
@@ -266,35 +268,47 @@ function doBSplineInterpolation(){
         }
     };
     
-    var Bp = function(i,u,p){
+	// Bp function
+    function Np(u,i,p){
         var A = 0;
         var B = 0;
         if (p-1 == 0) { 
-            A = Bo(i,u);
-            B = Bo(i+1,u);
+            A = No(u,i);
+            B = No(u, i+1);
         } else { 
-            A = Bp(i,u,p-1);
-            B = Bp(i+1, u, p-1);
+            A = Np(u,i,p-1);
+            B = Np(u,i+1, p-1);
         }
         
-        return ((u - U[i])/(U[i+p] -U[i]))*A + ((U[i+p+1] - u)/(U[i+p+1] - U[i+1]))*B;
+		var coeffA = 0;
+		var coeffB = 0;
+		if ( U[i+p] - U[i] != 0 ) 	  {coeffA = (u - U[i])/(U[i+p] -U[i]);}
+		if ( U[i+p+1] - U[i+1] != 0 ) {coeffB = (U[i+p+1] - u)/(U[i+p+1] - U[i+1]);}
+	    return coeffA*A + coeffB*B;
     };
     
-    var Curve = function(s){
+    function C(t){
         var result = [];
         for (var j = 0; j <3; j++){         //iterate over axes
             var sum = 0;
-            for (var i = 0; i < N; i++){    //iterate over control points
-                sum += CONTROL_POINTS[i][j] * Bp(i,s,K);
+            for (var i = 0; i <= N; i++){    //iterate over control points
+                sum += CONTROL_POINTS[i][j] * Np(t,i,P);
             }
             result[j] = sum;
         }
         return result;
-    }
+    };
     
-    for (var s = 0; s < ISTEPS; s++){
-            position.push(Curve(s));
-    }
+	
+	var dT = 1/ISTEPS;
+	var t = 0;
+    do{
+        position.push(C(t));
+		t += dT;
+    } while(t<1.0);
+	position.push(C(1.0));
+	
+
 }
 
 function interpolate(){
@@ -370,8 +384,8 @@ function draw() {
 			transforms.calculateModelView();           
             transforms.push();
                 if (object.alias == 'ball'){
-                    if (position[SCENE_TIME] != undefined){
-                        mat4.translate(transforms.mvMatrix,position[SCENE_TIME]);
+                    if (position[sceneTime] != undefined){
+                        mat4.translate(transforms.mvMatrix,position[sceneTime]);
                     }
                 }
                 else if (object.alias == 'flagInicio'){
@@ -384,12 +398,12 @@ function draw() {
                 else if (object.alias == 'flagControl1'){
                     if (INTERPOLATION_TYPE != I_LINEAR){
                         mat4.translate(transforms.mvMatrix, CONTROL_POINTS[1]);
-                        if (close(CONTROL_POINTS[1], position[SCENE_TIME],3)){
+                        if (close(CONTROL_POINTS[1], position[sceneTime],3)){
                             object.diffuse = [0.92,0.92,0.4,1.0];
                         }
                         else {
                             object.diffuse = [0.4,0.4,0.4,1.0];
-                         }
+                        }
                     }
                     else{
                         transforms.pop();
@@ -399,12 +413,12 @@ function draw() {
                 else if (object.alias == 'flagControl2'){
                     if (INTERPOLATION_TYPE != I_LINEAR){
                         mat4.translate(transforms.mvMatrix, CONTROL_POINTS[2]);
-                        if (close(CONTROL_POINTS[2], position[SCENE_TIME],3)){
+                        if (close(CONTROL_POINTS[2], position[sceneTime],3)){
                             object.diffuse = [0.92,0.92,0.4,1.0];
                         }
                         else {
                             object.diffuse = [0.4,0.4,0.4,1.0];
-                         }
+                        }
                     }
                     else{
                         transforms.pop();
@@ -414,12 +428,12 @@ function draw() {
                 else if (object.alias == 'flagControl3'){
                     if (INTERPOLATION_TYPE != I_LINEAR){
                         mat4.translate(transforms.mvMatrix, CONTROL_POINTS[3]);
-                        if (close(CONTROL_POINTS[3], position[SCENE_TIME],3)){
-                            object.diffuse = [0.92,0.92,0.4,1.0];
+                        if (close(CONTROL_POINTS[3], position[sceneTime],3)){
+                           object.diffuse = [0.92,0.92,0.4,1.0];
                         }
                         else {
                             object.diffuse = [0.4,0.4,0.4,1.0];
-                         }
+                        }
                     }
                     else{
                         transforms.pop();
@@ -480,13 +494,13 @@ function draw() {
 
 
 function animate(){
-    SCENE_TIME += 1;
-    if (SCENE_TIME == ISTEPS) SCENE_TIME = 0;
+    sceneTime += 1;
+    if (sceneTime == ISTEPS) sceneTime = 0;
 	draw();
 }
 
 function resetAnimation(){
-    SCENE_TIME = 0;
+    sceneTime = 0;
     position.length = 0;
 }
 
@@ -670,6 +684,7 @@ function updateSteps(){
 $('#opt-linear').click(
     function(){
        $('#tbl-ct1, #tbl-ct2, #tbl-ct3').fadeOut(600);
+	   resetAnimation();
        INTERPOLATION_TYPE = I_LINEAR;
        CONTROL_POINTS = [[-25,0,20],[-40,0,-10],[0,0,10],[25,0,-5],[40,0,-20]];
        ISTEPS = 1000;
@@ -680,6 +695,7 @@ $('#opt-linear').click(
 $('#opt-lagrange').click(
     function(){
         $('#tbl-ct1, #tbl-ct2, #tbl-ct3').fadeIn(300);
+		resetAnimation();
         INTERPOLATION_TYPE = I_POLYNOMIAL;
         CONTROL_POINTS = [[21,0,23],[-3,0,-10],[-21,0,-53],[50,0,-31],[-24,0,2]];
         ISTEPS = 1355;
@@ -689,10 +705,12 @@ $('#opt-lagrange').click(
 
 $('#opt-b-spline').click(
     function(){
+	   
        $('#tbl-ct1, #tbl-ct2, #tbl-ct3').fadeIn(300);
+	   resetAnimation();
        INTERPOLATION_TYPE = I_BSPLINE;
-       CONTROL_POINTS = [[21,0,23],[-3,0,-10],[-21,0,-53],[50,0,-31],[-24,0,2]];
-       ISTEPS = 10;
+       CONTROL_POINTS = [[-21,0,23],[32,0,-10],[0,0,-53],[-32,0,-10],[21,0,23]];
+       ISTEPS = 1000;
        initializeSliderValues();
        interpolate();
 });

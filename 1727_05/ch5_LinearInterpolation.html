@@ -152,7 +152,7 @@ var camera = null;
 var interactor = null;
 var transforms = null;
 
-var SCENE_TIME = 0.0;
+var sceneTime = 0.0;
 
 var INITIAL_POSITION = [-25,0,20];
 var FINAL_POSITION = [40,0,-20];
@@ -235,7 +235,7 @@ function draw() {
 			transforms.calculateModelView();           
             transforms.push();
             if (object.alias == 'ball'){
-            	mat4.translate(transforms.mvMatrix,position[SCENE_TIME]);
+            	mat4.translate(transforms.mvMatrix,position[sceneTime]);
                 object.diffuse = [0.5,0.9,0.3,1.0];
             }
             else if (object.alias == 'flagInicio'){
@@ -299,8 +299,8 @@ function draw() {
 
 
 function animate(){
-    SCENE_TIME += 1;
-    if (SCENE_TIME == ISTEPS) SCENE_TIME = 0;
+    sceneTime += 1;
+    if (sceneTime == ISTEPS) sceneTime = 0;
 	draw();
 }
 

@@ -151,10 +151,10 @@ Camera.prototype.update = function(){
         mat4.multiplyVec4(this.matrix, [0, 0, 0, 1], this.position);
     }
     
-    console.info('------------- update -------------');
-    console.info(' right: ' + vec3.str(this.right)+', up: ' + vec3.str(this.up)+',normal: ' + vec3.str(this.normal));
-    console.info('   pos: ' + vec3.str(this.position));
-    console.info('   azimuth: ' + this.azimuth +', elevation: '+ this.elevation);
+    //console.info('------------- update -------------');
+    //console.info(' right: ' + vec3.str(this.right)+', up: ' + vec3.str(this.up)+',normal: ' + vec3.str(this.normal));
+    //console.info('   pos: ' + vec3.str(this.position));
+   // console.info('   azimuth: ' + this.azimuth +', elevation: '+ this.elevation);
     if(this.hookRenderer){
         this.hookRenderer();
     }

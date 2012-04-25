@@ -129,12 +129,15 @@ var useVertexColors = false;
 function configure(){
     gl.clearColor(0.3,0.3,0.3, 1.0);
     gl.clearDepth(100.0);
-    //Disables depth testing so we can have access to all fragments regardless of their depth
-	gl.disable(gl.DEPTH_TEST);
+    
 	//Enables blending
 	gl.enable(gl.BLEND);
-	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
+	//Blending function for transparencies
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);    
+    //Enable culling
+    gl.enable(gl.CULL_FACE);
+    
+    
     //Creates and sets up the camera location
     camera = new Camera(CAMERA_ORBITING_TYPE);
     camera.goHome([0,0,4]);
@@ -189,7 +192,6 @@ function configure(){
 * Loads the scene
 */
 function load(){
-    Scene.loadObject('models/geometry/simpleCube.json','cube1', {hidden:false});
 	Scene.loadObject('models/geometry/complexCube.json','cube2', {hidden:true});
 }
 
@@ -252,6 +254,9 @@ function draw() {
                 gl.drawElements(gl.LINES, object.indices.length, gl.UNSIGNED_SHORT,0);
             }
             else{
+                gl.cullFace(gl.FRONT);
+                gl.drawElements(gl.TRIANGLES, object.indices.length, gl.UNSIGNED_SHORT,0);
+                gl.cullFace(gl.BACK);
                 gl.drawElements(gl.TRIANGLES, object.indices.length, gl.UNSIGNED_SHORT,0);
             }
 			

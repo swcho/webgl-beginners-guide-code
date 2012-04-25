@@ -134,7 +134,8 @@ var camera = null,
 function configure(){
 	gl.clearColor(0.3,0.3,0.3,1.0);
 	gl.clearDepth(100.0);
-	gl.disable(gl.DEPTH_TEST);
+	gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
 	gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
 	//gl.enable(gl.CULL_FACE);
 	
@@ -196,18 +197,18 @@ function draw() {
 	gl.viewport(0, 0, c_width, c_height);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	transforms.updatePerspective();
-	
+	//gl.enable(gl.BLEND);
 	try {
 		for (var i = 0, max=Scene.objects.length; i < max; i++){
 		
 			var object = Scene.objects[i];
 			
 			if(object.diffuse[3] < 1.0) {
-				gl.disable(gl.DEPTH_TEST);
-				gl.enable(gl.BLEND);
+				//gl.disable(gl.DEPTH_TEST);
+				//gl.enable(gl.BLEND);
 			} else {
-				gl.enable(gl.DEPTH_TEST);
-				gl.disable(gl.BLEND);
+				//gl.enable(gl.DEPTH_TEST);
+				//gl.disable(gl.BLEND);
 			}
 			
 			transforms.calculateModelView();

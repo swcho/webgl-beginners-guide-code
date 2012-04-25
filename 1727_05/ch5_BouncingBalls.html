@@ -152,7 +152,7 @@ var camera = null;
 var interactor = null;
 var transforms = null;
 
-var SCENE_TIME = 0.0;
+var sceneTime = 0.0;
 
 var ball = [];
 var BALL_GRAVITY = 9.8;
@@ -322,16 +322,32 @@ function draw() {
 }
 
 
+var animationRate = 15; /* 15 ms */
+var elapsedTime = undefined;
+var initialTime = undefined;
+
 function animate(){
     for (var i = 0; i<ball.length; i++){
-        ball[i].update(SCENE_TIME);
+        ball[i].update(sceneTime);
     }
-    SCENE_TIME += 30/1000;
+    sceneTime += 33/1000;	//simulation time
 	draw();
 }
 
+function onFrame() {
+	elapsedTime = (new Date).getTime() - initialTime;
+	if (elapsedTime < animationRate) { return;} //come back later
+	var steps = Math.floor(elapsedTime / animationRate);
+    while(steps > 0){
+        animate();
+        steps -= 1;
+    }
+	initialTime = (new Date).getTime();
+}
+
 function startAnimation(){
-	setInterval(animate,30/1000);
+	initialTime = (new Date).getTime();
+	setInterval(onFrame,animationRate/1000); // animation rate
 }
 
 

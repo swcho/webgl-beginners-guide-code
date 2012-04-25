@@ -67,20 +67,13 @@ void main(void) {
         }
     }
  
- 
-mat4 MV =  mat4(uMVMatrix);
-           
+ //Transformed vertex position
+ vec3 vecPosition = aVertexPosition; 
  if (uTranslate){
-    
-    mat4 TM = mat4(1,0,0,0,
-              0,1,0,0,
-              0,0,1,0,
-              uTranslation.x,uTranslation.y,uTranslation.z,1);
-    MV = mat4(uMVMatrix) * TM;
+    vecPosition += uTranslation;
  }
  
- //Transformed vertex position
- vec4 vertex = MV * vec4(aVertexPosition, 1.0);
+ vec4 vertex = uMVMatrix * vec4(vecPosition, 1.0);
  
  //Transformed normal position
  vNormal = vec3(uNMatrix * vec4(aVertexNormal, 1.0));
@@ -89,7 +82,7 @@ mat4 MV =  mat4(uMVMatrix);
  vec4 light = vec4(uLightPosition,1.0);
  
  if(uUpdateLight){
-     light = MV * vec4(uLightPosition,1.0);
+     light = uMVMatrix * vec4(uLightPosition,1.0);
   }
 	
  //Light position
@@ -99,7 +92,7 @@ mat4 MV =  mat4(uMVMatrix);
  vEyeVec = -vec3(vertex.xyz);
  
  //Final vertex position
- gl_Position = uPMatrix * MV * vec4(aVertexPosition, 1.0);
+ gl_Position = uPMatrix * vertex;
 
 }	
 </script>
@@ -171,7 +164,7 @@ var transforms = null;
 var ball = [];
 var BALL_GRAVITY = 9.8;
 var NUM_BALLS = 500;
-var SCENE_TIME = 0.0;
+var sceneTime = 0.0;
 
 function generatePosition(){
     
@@ -383,16 +376,32 @@ function draw() {
     }
 }
 
+var animationRate = 15; /* 15 ms */
+var elapsedTime = undefined;
+var initialTime = undefined;
+
 function animate(){
     for (var i = 0; i<ball.length; i++){
-        ball[i].update(SCENE_TIME);
+        ball[i].update(sceneTime);
     }
-    SCENE_TIME += 30/1000;
+    sceneTime += 33/1000;	//simulation time
 	draw();
 }
 
+function onFrame() {
+	elapsedTime = (new Date).getTime() - initialTime;
+	if (elapsedTime < animationRate) { return;} //come back later
+	var steps = Math.floor(elapsedTime / animationRate);
+    while(steps > 0){
+        animate();
+        steps -= 1;
+    }
+	initialTime = (new Date).getTime();
+}
+
 function startAnimation(){
-	setInterval(animate,30/1000);
+	initialTime = (new Date).getTime();
+	setInterval(onFrame,animationRate/1000); // animation rate
 }
 
 
@@ -416,7 +425,7 @@ function runWebGLApp() {
 <body onLoad='runWebGLApp()'>
 <div id='top'>
 <h1>WebGL Beginner's Guide - Chapter 5</h1>
-<h2>Parametric Curves: Bouncing Balls</h2>
+<h2>Parametric Curves: Optimized Bouncing Balls</h2>
 <div id='logo-packt'><img src='packt.gif'/></div>
 <p></p>
 </div>

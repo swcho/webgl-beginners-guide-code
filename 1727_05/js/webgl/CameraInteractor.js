@@ -49,7 +49,7 @@ CameraInteractor.prototype.onMouseMove = function(ev){
 	var dy = this.y - this.lastY;
 	
 	if (this.button == 0) { 
-		if(this.ctrl){
+		if(this.alt){
 			this.dolly(dy);
 		}
 		else{ 
@@ -63,6 +63,7 @@ CameraInteractor.prototype.onKeyDown = function(ev){
 	
 	this.key = ev.keyCode;
 	this.ctrl = ev.ctrlKey;
+	this.alt = ev.altKey;
 	
 	if (!this.ctrl){
 		if (this.key == 38){
