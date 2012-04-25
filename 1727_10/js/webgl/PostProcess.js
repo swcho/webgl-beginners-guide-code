@@ -55,16 +55,16 @@ PostProcess.prototype.configureFramebuffer = function(){
 PostProcess.prototype.configureGeometry = function(){
     //1. Define the geometry for the fullscreen quad
     var vertices = [
-        -1.0,-1.0, 0.0,
-         1.0,-1.0, 0.0,
-        -1.0, 1.0, 0.0,
+        -1.0,-1.0,
+         1.0,-1.0,
+        -1.0, 1.0,
 
-        -1.0, 1.0, 0.0,
-         1.0,-1.0, 0.0,
-         1.0, 1.0, 0.0
+        -1.0, 1.0,
+         1.0,-1.0,
+         1.0, 1.0
     ];
 
-    var texture_coords = [
+    var textureCoords = [
          0.0, 0.0,
          1.0, 0.0,
          0.0, 1.0,
@@ -81,7 +81,7 @@ PostProcess.prototype.configureGeometry = function(){
       
     this.textureBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texture_coords), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
 
     //3. Clean up
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -152,7 +152,7 @@ PostProcess.prototype.bind = function(){
     // Bind the quad geometry
     gl.enableVertexAttribArray(this.attrib.aVertexPosition);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.vertexAttribPointer(this.attrib.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(this.attrib.aVertexPosition, 2, gl.FLOAT, false, 0, 0);
 
     gl.enableVertexAttribArray(this.attrib.aVertexTextureCoords);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);

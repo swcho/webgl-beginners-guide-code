@@ -33,22 +33,20 @@
 <script type='text/javascript' src='js/webgl/PostProcess.js'></script>
 
 <script id="post-common-vs" type="x-shader/x-vertex">
-attribute vec3 aVertexPosition;
+attribute vec2 aVertexPosition;
 attribute vec2 aVertexTextureCoords;
 
 varying vec2 vTextureCoord;
 
 void main(void) {
     vTextureCoord = aVertexTextureCoords;
-    gl_Position = vec4(aVertexPosition, 1.0);
+    gl_Position = vec4(aVertexPosition, 0.0, 1.0);
 }   
 </script>
 
 <!--http://glsl.heroku.com/e#1686.0-->
 <script id="raytrace-fs" type="x-shader/x-fragment">
-#ifdef GL_ES
 precision mediump float;
-#endif
 
 uniform float uTime;
 uniform vec2 uInverseTextureSize;
@@ -85,22 +83,22 @@ vec3 sphereNorm( vec3 pt, vec4 s ) {
 }
 
 float intersect( vec3 ro, vec3 rd, out vec3 norm, out vec3 color ) {
-    float t = maxDist;
+    float dist = maxDist;
 
     // If we wanted multiple objects in the scene you would loop through them here
-    // and return the normal and color with the closest intersection point (lowest t)
+    // and return the normal and color with the closest intersection point (lowest dist)
 
-    float ot = sphereInter( ro, rd, sphere1 ); 
+    float interDist = sphereInter( ro, rd, sphere1 ); 
     
-    if ( ot > 0.0 && ot < t ) {
-        t = ot;
+    if ( interDist > 0.0 && interDist < dist ) {
+        dist = interDist;
 
-        vec3 pt = ro + t * rd; // Point of intersection
+        vec3 pt = ro + dist * rd; // Point of intersection
         norm = sphereNorm(pt, sphere1); // Get normal for that point
         color = sphere1Color; // Get color for the sphere
     }
 
-    return t;
+    return dist;
 }
 
 void main( void ) {
