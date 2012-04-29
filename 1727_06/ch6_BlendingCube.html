@@ -1,7 +1,8 @@
+<!DOCTYPE html>
 <html>
 
 <head>
-<title>WebGL Beginner's Guide - Chapter 6 - Using Colors On Objects</title>
+<title>WebGL Beginner's Guide - Chapter 6 - Blending Equations</title>
 <meta http-equiv='content-type' content='text/html; charset=ISO-8859-1'>
 
 <!-- CSS Styles //-->
@@ -51,7 +52,6 @@ uniform mat4 uNMatrix;
 uniform vec3 uLightPosition;
 uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
-uniform bool uUseLambert;
 
 //varyings
 varying vec4 vColor;
@@ -62,18 +62,8 @@ void main(void) {
  //Transformed vertex position
  vec4 vertex = uMVMatrix * vec4(aVertexPosition, 1.0);
  
+ //we are not using lambert weighing in this exercise :-)
  float lambertTerm = 1.0;
-
- if (uUseLambert){
-	//Transformed normal position
-	vec3 normal = vec3(uNMatrix * vec4(aVertexNormal, 1.0));
- 
-	//light direction: pointing at the origin
-	vec3 lightDirection = normalize(-uLightPosition);
- 
-	//weighting factor
-	lambertTerm = max(dot(normal,-lightDirection),0.20);
- }
 
  //reading vertex color
  vec4 Ia = uLightAmbient * uMaterialAmbient;
@@ -121,22 +111,39 @@ void main(void)
 
 <script id='code-js' type="text/javascript">
 
-var camera = null;
-var interactor = null;
-var transforms = null;
-var useVertexColors = false;
+var camera           = null,
+ interactor          = null,
+ transforms          = null,
+ useVertexColors     = true,
+ blending            = true,
+ blendingEquation    = undefined,
+ blendingSource      = undefined,
+ blendingTarget      = undefined,
+ blendingColor       = [0.0, 1.0, 0.0],
+ blendingAlpha       = 1.0;
 
 function configure(){
+
+
     gl.clearColor(0.3,0.3,0.3, 1.0);
     gl.clearDepth(100.0);
     
-	//Enables blending
+    //Enables depth testing
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+	
+    //Enables blending
 	gl.enable(gl.BLEND);
+
 	//Blending function for transparencies
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);    
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);   
+    gl.blendColor(blendingColor[0], blendingColor[1], blendingColor[2], blendingAlpha);    
     //Enable culling
     gl.enable(gl.CULL_FACE);
-    
+
+     blendingEquation    = gl.FUNC_ADD;
+     blendingSource      = gl.SRC_ALPHA;
+     blendingTarget      = gl.ONE_MINUS_SRC_ALPHA;    
     
     //Creates and sets up the camera location
     camera = new Camera(CAMERA_ORBITING_TYPE);
@@ -178,11 +185,11 @@ function configure(){
 	Program.load(attributeList, uniformList);
 	
 	gl.uniform3fv(Program.uLightPosition,   [0,5,20]);
-	gl.uniform3fv(Program.uLightAmbient,    [1.0,1.0,1.0,1.0]);
+	gl.uniform4fv(Program.uLightAmbient,    [1.0,1.0,1.0,1.0]);
 	gl.uniform4fv(Program.uLightDiffuse,    [1.0,1.0,1.0,1.0]);
-	gl.uniform1f(Program.uAlpha, 1.0);
+	gl.uniform1f(Program.uAlpha, 0.5);
 	gl.uniform1i(Program.uUseVertexColor, useVertexColors);
-	gl.uniform1i(Program.uUseLambert, true);
+	gl.uniform1i(Program.uUseLambert, false);
 
 }
 
@@ -192,7 +199,7 @@ function configure(){
 * Loads the scene
 */
 function load(){
-	Scene.loadObject('models/geometry/complexCube.json','cube2', {hidden:true});
+	Scene.loadObject('models/geometry/complexCube.json','cube');
 }
 
 
@@ -211,7 +218,6 @@ function draw() {
             
             var object = Scene.objects[i];
 			
-			if (object.hidden == true) continue;
 			
 			transforms.calculateModelView();           
             transforms.push();
@@ -289,7 +295,7 @@ function runWebGLApp() {
 <body onLoad='runWebGLApp()'>
 <div id='top'>
 <h1>WebGL Beginner's Guide - Chapter 6</h1>
-<h2>Using Colors in Objects</h2>
+<h2>Blending Equations</h2>
 <div id='logo-packt'><img src='packt.gif'/></div>
 <p></p>
 </div>
@@ -303,86 +309,199 @@ Your browser does not support the HTML5 canvas element.
 </div>
 
 <div id='bottom'>
-<table style='padding=0px'>
+<table style='padding=0px;margin-left:0px'>
 <tr>
 	<td>
-	<table id='coloring-table'>
-	<tr>
-	<td><input type="checkbox" id="lambert-btn" checked='checked' /><label for="lambert-btn">Use Lambert Term</label></td>
-	<td>
-	<div id='opt-type' >
-		<input type='radio' id='opt-constant' name='typecolor' checked='checked' /><label for='opt-constant'>Constant</label>
-		<input type='radio' id='opt-vertex' name='typecolor' /><label for='opt-vertex'>Per Vertex</label>
-    </div>
-	</td>
-	<td>
-	<div id='opt-cube'>
-		<input type='radio' id='opt-cube1' name='cube' checked='checked' /><label for='opt-cube1'>Simple Cube</label>
-		<input type='radio' id='opt-cube2' name='cube' /><label for='opt-cube2'>Complex Cube</label>
-    </div>
-	</td>
-	</tr>		
-	</table>
-	</td>
-</tr>	
-<tr>
-    <td> 
-    <table cellspacing=4px style='vertical-align:top'>
-		<tr>
-			<td>Alpha Value:</td><td id='slider-alpha-value'>1.0</td><td width='150px'><div id='slider-alpha'/></td>
-		</tr>
+	<table style='margin-left:0px'>
+    <tr>
+        <td><input type="checkbox" id="blending-btn" checked='checked'/><label for="blending-btn">Alpha Blending</label>
+        </td>
+    </tr>
+    <tr>    
+        <td>
+            <table width='100%'>
+            <tr>
+                <td>Alpha Value:</td>
+                <td id='slider-alpha-value' width='15%'><b>0.5</b></td>
+                <td width='80%'><div id='slider-alpha'/></td>
+            </tr>
+            </table>
+        </td>  
+    </tr>
+    <tr>
+        <td colspan='2'>
+            <table>
+            <tr>
+                <td>Blend Function</td><td>Source</td><td>Destination</td>
+            </tr>
+            <tr>
+            <td>
+                <select name='Blend Equation' id='selBlendEquation'>
+                    <option value='FUNC_ADD' selected='selected'>gl.FUNC_ADD</option>
+                    <option value='FUNC_SUBTRACT'>gl.FUNC_SUBTRACT</option>
+                    <option value='FUNC_REVERSE_SUBTRACT'>gl.FUNC_REVERSE_SUBTRACT</option>
+                </select>
+            </td>
+            <td>
+                <select name='Source' id='selSource'>
+                    <option value='ZERO'>gl.ZERO</option>
+                    <option value='ONE'>gl.ONE</option>
+                    <option value='SRC_COLOR'>gl.SRC_COLOR</option>
+                    <option value='DST_COLOR'>gl.DST_COLOR</option>
+                    <option value='SRC_ALPHA' selected='selected'>gl.SRC_ALPHA</option>
+                    <option value='DST_ALPHA'>gl.DST_ALPHA</option>
+                    <option value='CONSTANT_COLOR'>gl.CONSTANT_COLOR</option>
+                    <option value='CONSTANT_ALPHA'>gl.CONSTANT_ALPHA</option>
+                    <option value='ONE_MINUS_SRC_ALPHA'>gl.ONE_MINUS_SRC_ALPHA</option>
+                    <option value='ONE_MINUS_DST_ALPHA'>gl.ONE_MINUS_DST_ALPHA</option>
+                    <option value='ONE_MINUS_SRC_COLOR'>gl.ONE_MINUS_SRC_COLOR</option>
+                    <option value='ONE_MINUS_DST_COLOR'>gl.ONE_MINUS_DST_COLOR</option>
+                    <option value='ONE_MINUS_CONSTANT_COLOR'>gl.ONE_MINUS_CONSTANT_COLOR</option>
+                    <option value='ONE_MINUS_CONSTANT_ALPHA'>gl.ONE_MINUS_CONSTANT_ALPHA</option>
+                    <option value='SRC_ALPHA_SATURATE'>gl.SRC_ALPHA_SATURATE</option>
+                </select>    
+            </td>
+            <td>
+                <select name='Target' id='selTarget'>
+                    <option value='ZERO'>gl.ZERO</option>
+                    <option value='ONE'>gl.ONE</option>
+                    <option value='SRC_COLOR'>gl.SRC_COLOR</option>
+                    <option value='DST_COLOR'>gl.DST_COLOR</option>
+                    <option value='SRC_ALPHA'>gl.SRC_ALPHA</option>
+                    <option value='DST_ALPHA'>gl.DST_ALPHA</option>
+                    <option value='CONSTANT_COLOR'>gl.CONSTANT_COLOR</option>
+                    <option value='CONSTANT_ALPHA'>gl.CONSTANT_ALPHA</option>
+                    <option selected='selected' value='ONE_MINUS_SRC_ALPHA' >gl.ONE_MINUS_SRC_ALPHA</option>
+                    <option value='ONE_MINUS_DST_ALPHA'>gl.ONE_MINUS_DST_ALPHA</option>
+                    <option value='ONE_MINUS_SRC_COLOR'>gl.ONE_MINUS_SRC_COLOR</option>
+                    <option value='ONE_MINUS_DST_COLOR'>gl.ONE_MINUS_DST_COLOR</option>
+                    <option value='ONE_MINUS_CONSTANT_COLOR'>gl.ONE_MINUS_CONSTANT_COLOR</option>
+                    <option value='ONE_MINUS_CONSTANT_ALPHA'>gl.ONE_MINUS_CONSTANT_ALPHA</option>
+                </select>    
+            </td>
+           
+            </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td>
+        <table style='margin-left:0px'>
+        <tr><td>Constant Blending Color (when applicable):</td>
+            <td>
+                <div id='blendingColorSelector' class='colorSelector'>
+                <div style='background-color:rgb(128,205,26)'></div>
+                </div>
+            </td>
+        </tr>
+        </table>
+        </td></tr><tr>
+        <td>
+        <table style='margin-left:0px'>
+            <tr><td>Constant Alpha (when applicable):</td>
+            <td id='slider-c-alpha-value' width='15%'><b>1.0</b></td>
+            <td width='80%'><div id='slider-c-alpha'/></td>
+            </td></tr>
+        </table>
+     </tr>
     </table>
-    </td>
-</tr>
-</table>
+</td></tr>	
+</table>    
 </div>
 <script> 
 
 
-$('#slider-alpha').slider({value:1.0, min:0.0, max:1.01, step:0.05, slide:updateAlpha});
+$('#slider-alpha').slider({value:0.5, min:0.0, max:1.01, step:0.05, slide:updateAlpha});
 
 function updateAlpha(){
     var v = $('#slider-alpha').slider("value");
     gl.uniform1f(Program.uAlpha, v);
-    $('#slider-alpha-value').html(v);
+    $('#slider-alpha-value').html('<b>'+v+'</b>');
 	app.refresh();
 }
 
+$('#slider-c-alpha').slider({value:1.0, min:0.0, max:1.00, step:0.05, slide:updateConstantAlpha});
 
-$('#lambert-btn').button();
-$('#opt-type, #opt-cube').buttonset();
+function updateConstantAlpha(){
+    var v = $('#slider-c-alpha').slider("value");
+    $('#slider-c-alpha-value').html('<b>'+v+'</b>');
+    blendingAlpha = v;
+	updateBlending();
+}
 
-$('#lambert-btn').click(function(){
-	gl.uniform1i(Program.uUseLambert, $('#lambert-btn').is(':checked'));
-});
 
-$('#opt-constant').click(function(){
-	useVertexColors = false;
+$('#blending-btn').button();
+
+
+function updateBlending(){
+    if (blending){
+        gl.enable(gl.BLEND);
+    }
+    else{
+        gl.disable(gl.BLEND);
+    }
+    gl.blendEquation(blendingEquation);
+    gl.blendFunc(blendingSource, blendingTarget);
+    gl.blendColor(blendingColor[0], blendingColor[1], blendingColor[2],blendingAlpha);
     app.refresh();
+}
+
+
+
+
+$('#blending-btn').click(function(){
+  blending = $('#blending-btn').is(':checked');
+  
+  $('#selBlendEquation, #selSource, #selTarget').attr('disabled',blending?'':'disabled');
+  updateBlending();
 });
 
-$('#opt-vertex').click(function(){
-	useVertexColors = true;
-    app.refresh();
-});
 
-$('#opt-cube1').click(function(){
-	var cube1  = Scene.getObject('cube1');
-	var cube2  = Scene.getObject('cube2');
-	cube1.hidden = false;
-	cube2.hidden = true;
-    app.refresh();
-});
 
-$('#opt-cube2').click(function(){
-	var cube1  = Scene.getObject('cube1');
-	var cube2  = Scene.getObject('cube2');
-	cube1.hidden = true;
-	cube2.hidden = false;
-    app.refresh();
-});
+
+$("#selBlendEquation").change(function (event) {
+    blendingEquation = gl[event.target.value];
+    updateBlending();
+    
+ });
+ 
+$("#selSource").change(function (event) {
+    blendingSource = gl[event.target.value];
+    updateBlending();
+ });
+
+ $("#selTarget").change(function (event) {
+    blendingTarget = gl[event.target.value];
+    updateBlending();
+ });
+
+ 
+ $('#blendingColorSelector').ColorPicker({
+    onSubmit: function(hsb, hex, rgb, el) {
+   $(el).val(hex);
+   $(el).ColorPickerHide();
+   
+ },
+ color: '#00ff00',
+    onShow: function (colpkr) {
+        $(colpkr).fadeIn(500);
+        return false;
+    },
+    onHide: function (colpkr) {
+        $(colpkr).fadeOut(500);
+        return false;
+    },
+    onChange: function (hsb, hex, rgb) {
+        $('#blendingColorSelector div').css('backgroundColor', '#' + hex);
+        blendingColor = [rgb.r/256,rgb.g/256,rgb.b/256];
+        updateBlending();
+    },
+    
+    onBeforeShow: function (colpkr) {
+   $(this).ColorPickerSetColor('rgb(0.0,1.0,0.0)');
+  }
+ })
 
 </script>
-<script>cview.run(cview.MODE_VIEW,false,470);</script>
+<script>cview.run(cview.MODE_VIEW_AND_CONTROLS,false,470);</script>
 </body>
 </html>

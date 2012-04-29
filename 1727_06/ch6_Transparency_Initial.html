@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title>WebGL Beginner's Guide - Chapter 6 - The Transparency Problem</title>
+<title>WebGL Beginner's Guide - Chapter 6 - Seeing through walls</title>
 <meta http-equiv='content-type' content='text/html; charset=ISO-8859-1'>
 <!-- CSS Styles //-->
 <link href='css/styles.css'   type='text/css' rel='stylesheet'>
@@ -76,8 +76,6 @@ uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
 uniform vec4 uMaterialAmbient;
 uniform vec4 uMaterialDiffuse; 
-uniform bool uAddDiffuse;
-uniform bool uAddAmbient;
 
 varying vec3 vNormal;
 varying vec3 vLightRay;
@@ -106,19 +104,7 @@ void main(void)
 			Id = uLightDiffuse * uMaterialDiffuse * lambertTerm; 
 		}			
 
-    	//Final color
-		vec3 finalColor = vec3(0.0,0.0,0.0);
-		
-		if (uAddAmbient){
-			finalColor = finalColor + Ia.rgb;
-		}
-		
-		if (uAddDiffuse){
-			finalColor = finalColor + Id.rgb;
-		}
-		
-		float alpha =  uMaterialDiffuse.a;
-	   	gl_FragColor = vec4(finalColor,alpha);
+	   	gl_FragColor = vec4(Ia.rbg + Id.rgb,uMaterialDiffuse.a);
     }
 
 }
@@ -128,20 +114,21 @@ void main(void)
 
 var camera = null,
 	interactor = null,
-	transforms = null,
-	addDiffuse = true,
-	addAmbient = true;
+	transforms = null;
+
 
 function configure(){
     gl.clearColor(0.3,0.3,0.3,1.0);
-    gl.clearDepth(100.0);
+    gl.clearDepth(1.0);
+    
+    //Enabling depth testing
     gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
+    gl.depthFunc(gl.LESS);
     
     
     //Creates and sets up the camera location
     camera = new Camera(CAMERA_ORBITING_TYPE);
-    camera.goHome([0,5,30]);
+    camera.goHome([0,5,35]);
     camera.setFocus([0.0,0.0,0.0]);
 	camera.setAzimuth(-47);
 	camera.setElevation(-3);
@@ -169,16 +156,13 @@ function configure(){
 					"uLightAmbient",
 					"uLightDiffuse",
 					"uPositionLight",
-					"uWireframe",
-					"uAddAmbient",
-					"uAddDiffuse"];
+					"uWireframe"];
 		
 	Program.load(attributeList, 			uniformList);
 	gl.uniform3fv(Program.uPositionLight,   [0, 7, 3]);
 	gl.uniform4fv(Program.uLightAmbient,  	[1.0,1.0,1.0,1.0]);
 	gl.uniform4fv(Program.uLightDiffuse,   	[1.0,1.0,1.0,1.0]);
-	gl.uniform1i(Program.uAddDiffuse, 		true);
-	gl.uniform1i(Program.uAddAmbient, 		true);
+
 
 }
 
@@ -190,7 +174,7 @@ function load(){
     Floor.build(80,2);
     Scene.addObject(Floor);
 	Scene.loadObject('models/geometry/cone.json','cone');
-	Scene.loadObject('models/geometry/transparentWall.json','wall');
+	Scene.loadObject('models/geometry/wall.json','wall',{diffuse:[0.5,0.5,0.2,1.0], ambient:[0.2,0.2,0.2,1.0]});
 }
 
 /**
@@ -209,18 +193,17 @@ function draw() {
 			transforms.calculateModelView();           
             transforms.push();
             
-			if (object.alias == 'cone') {
-				mat4.translate(transforms.mvMatrix, [0, 0, -10]);
-			}
+			switch (object.alias){
+                case 'cone': mat4.translate(transforms.mvMatrix, [0, 0, -5]); break;
+                case 'wall': mat4.translate(transforms.mvMatrix, [0, 0, 5]); break;
+            }
 			
             transforms.setMatrixUniforms();
             transforms.pop();
    
             //Setting uniforms
             gl.uniform4fv(Program.uMaterialDiffuse, object.diffuse);
-			gl.uniform1i(Program.uAddDiffuse, addDiffuse);
-			gl.uniform1i(Program.uAddAmbient, addAmbient);
-            gl.uniform4fv(Program.uMaterialAmbient, object.ambient);
+		    gl.uniform4fv(Program.uMaterialAmbient, object.ambient);
             gl.uniform1i(Program.uWireframe,object.wireframe);
             
             //Setting attributes
@@ -275,7 +258,7 @@ function runWebGLApp() {
 <body onLoad='runWebGLApp()'>
 <div id='top'>
 <h1>WebGL Beginner's Guide - Chapter 6</h1>
-<h2>The Transparency Problem</h2>
+<h2>Seeing through walls!</h2>
 <div id='logo-packt'><img src='packt.gif'/></div>
 <p></p>
 </div>
@@ -298,12 +281,12 @@ Your browser does not support the HTML5 canvas element.
 		<td align='right'>Wall Alpha:</td>
 		<td>
 			<table>
-				<tr><td id='slider-wall-alpha-value' width='30px' colspan='2'>0.5</td><td width = '150px'><div id='slider-wall-alpha'/></td></tr>
+				<tr><td id='slider-wall-alpha-value' width='30px' colspan='2'>1.0</td><td width = '150px'><div id='slider-wall-alpha'/></td></tr>
 			</table>
 		</td>
 	</tr>
     <tr>
-		<td align='right'>Object Alpha:</td>
+		<td align='right'>Cone Alpha:</td>
 		<td>
 			<table>
 				<tr><td id='slider-object-alpha-value' width='30px' colspan='2'>1.0</td><td width = '150px'><div id='slider-object-alpha'/></td></tr>
@@ -315,15 +298,6 @@ Your browser does not support the HTML5 canvas element.
 	</td>
 	<td valign ='top'>
 		<table>
-		<tr>
-			<td align='right'> Lighting:</td>
-			<td colspan = '2'>
-			<div id='opt-ren'>
-			<input type='checkbox' id='opt-ren-ambi' name='render' checked='checked'/><label for='opt-ren-ambi'>Ambient</label>
-			<input type='checkbox' id='opt-ren-diff'  name='render' checked='checked'/><label for='opt-ren-diff'>Diffuse</label>
-			</div>
-			</td>
-		</tr>
 		<tr>
 			<td align='right'> Render Order:</td>
 			<td colspan = '2'>
@@ -361,8 +335,8 @@ Your browser does not support the HTML5 canvas element.
 
 
 
-$('#slider-wall-alpha').slider({value:0.5, min:0.0, max:1.0, step:0.1, slide:updateAlphaWall,  change:updateAlphaWall});
-$('#slider-object-alpha').slider({value:1.0, min:0.0, max:1.0, step:0.1, slide:updateAlphaObject,  change:updateAlphaObject});
+$('#slider-wall-alpha').slider({value:1.0, min:0.0, max:1.0, step:0.1, slide:updateAlphaWall,  change:updateAlphaWall});
+$('#slider-object-alpha').slider({value:1.0, min:0.0, max:1.0, step:0.1, slide:updateAlphaCone,  change:updateAlphaCone});
 
 
 function updateAlphaWall(){
@@ -373,7 +347,7 @@ function updateAlphaWall(){
 	draw();
 }
 
-function updateAlphaObject(){
+function updateAlphaCone(){
 	var alpha = $('#slider-object-alpha').slider("value");
 	$('#slider-object-alpha-value').html(alpha);
 	var cone = Scene.getObject('cone');
@@ -398,16 +372,6 @@ $('#opt-wall-first').click(function(){
 $('#opt-cone-first').click(function(){
 	Scene.renderSooner('cone');
 	Scene.renderFirst('floor');
-	draw();
-});
-
-$('#opt-ren-ambi').click(function(){
-	addAmbient = $('#opt-ren-ambi').is(':checked');
-	draw();
-});
-
-$('#opt-ren-diff').click(function(){
-	addDiffuse = $('#opt-ren-diff').is(':checked');
 	draw();
 });
 
