@@ -2,7 +2,7 @@
 <html>
 
 <head>
-<title>WebGL Beginner's Guide - Chapter 6 - Blending Equations</title>
+<title>WebGL Beginner's Guide - Chapter 6 - Transparent Objects</title>
 <meta http-equiv='content-type' content='text/html; charset=ISO-8859-1'>
 
 <!-- CSS Styles //-->
@@ -120,13 +120,15 @@ var camera           = null,
  blendingSource      = undefined,
  blendingTarget      = undefined,
  blendingColor       = [0.0, 1.0, 0.0],
- blendingAlpha       = 1.0;
+ blendingAlpha       = 1.0,
+ showFrontFace       = true,
+ showBackFace        = true;
 
 function configure(){
 
 
     gl.clearColor(0.3,0.3,0.3, 1.0);
-    gl.clearDepth(100.0);
+    gl.clearDepth(1.0);
     
     //Enables depth testing
     gl.enable(gl.DEPTH_TEST);
@@ -149,7 +151,7 @@ function configure(){
     camera = new Camera(CAMERA_ORBITING_TYPE);
     camera.goHome([0,0,4]);
     camera.setFocus([0.0,0.0,0.0]);
-	camera.setAzimuth(45);
+	camera.setAzimuth(50);
 	camera.setElevation(-30);
     camera.hookRenderer = draw;
     
@@ -260,10 +262,14 @@ function draw() {
                 gl.drawElements(gl.LINES, object.indices.length, gl.UNSIGNED_SHORT,0);
             }
             else{
-                gl.cullFace(gl.FRONT);
-                gl.drawElements(gl.TRIANGLES, object.indices.length, gl.UNSIGNED_SHORT,0);
-                gl.cullFace(gl.BACK);
-                gl.drawElements(gl.TRIANGLES, object.indices.length, gl.UNSIGNED_SHORT,0);
+                if(showBackFace){
+                    gl.cullFace(gl.FRONT);  //renders the back face
+                    gl.drawElements(gl.TRIANGLES, object.indices.length, gl.UNSIGNED_SHORT,0);
+                }
+                if (showFrontFace){
+                    gl.cullFace(gl.BACK);  //renders the front face
+                    gl.drawElements(gl.TRIANGLES, object.indices.length, gl.UNSIGNED_SHORT,0);
+                }
             }
 			
             gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -295,7 +301,7 @@ function runWebGLApp() {
 <body onLoad='runWebGLApp()'>
 <div id='top'>
 <h1>WebGL Beginner's Guide - Chapter 6</h1>
-<h2>Blending Equations</h2>
+<h2>Creating Transparent Objects with Alpha Blending and Face Culling</h2>
 <div id='logo-packt'><img src='packt.gif'/></div>
 <p></p>
 </div>
@@ -314,7 +320,10 @@ Your browser does not support the HTML5 canvas element.
 	<td>
 	<table style='margin-left:0px'>
     <tr>
-        <td><input type="checkbox" id="blending-btn" checked='checked'/><label for="blending-btn">Alpha Blending</label>
+        <td>
+        <input type="checkbox" id="blending-btn" checked='checked'/><label for="blending-btn">Alpha Blending</label>
+        <input type="checkbox" id="show-front-btn" checked='checked'/><label for="show-front-btn">Render Front Face</label>
+        <input type="checkbox" id="show-back-btn" checked='checked'/><label for="show-back-btn">Render Back Face</label>
         </td>
     </tr>
     <tr>    
@@ -410,26 +419,27 @@ Your browser does not support the HTML5 canvas element.
 <script> 
 
 
-$('#slider-alpha').slider({value:0.5, min:0.0, max:1.01, step:0.05, slide:updateAlpha});
+$('#slider-alpha').slider({value:0.5, min:0.0, max:1.0, step:0.01, slide:updateAlpha, change:updateAlpha});
 
 function updateAlpha(){
     var v = $('#slider-alpha').slider("value");
     gl.uniform1f(Program.uAlpha, v);
     $('#slider-alpha-value').html('<b>'+v+'</b>');
 	app.refresh();
-}
+};
 
-$('#slider-c-alpha').slider({value:1.0, min:0.0, max:1.00, step:0.05, slide:updateConstantAlpha});
+$('#slider-c-alpha').slider({value:1.0, min:0.0, max:1.00, step:0.05, slide:updateConstantAlpha, change:updateConstantAlpha});
 
 function updateConstantAlpha(){
     var v = $('#slider-c-alpha').slider("value");
     $('#slider-c-alpha-value').html('<b>'+v+'</b>');
     blendingAlpha = v;
 	updateBlending();
-}
+};
 
 
-$('#blending-btn').button();
+$('#blending-btn, #show-front-btn, #show-back-btn').button();
+//$('#show-front-btn').button();
 
 
 function updateBlending(){
@@ -443,7 +453,7 @@ function updateBlending(){
     gl.blendFunc(blendingSource, blendingTarget);
     gl.blendColor(blendingColor[0], blendingColor[1], blendingColor[2],blendingAlpha);
     app.refresh();
-}
+};
 
 
 
@@ -455,7 +465,13 @@ $('#blending-btn').click(function(){
   updateBlending();
 });
 
+$('#show-front-btn').click(function(){
+    showFrontFace = $('#show-front-btn').is(':checked');
+});
 
+$('#show-back-btn').click(function(){
+    showBackFace = $('#show-back-btn').is(':checked');
+});
 
 
 $("#selBlendEquation").change(function (event) {

@@ -172,14 +172,11 @@ translateLights = false;
 
 function configure(){
     gl.clearColor(0.2,0.2,0.2, 1.0);
-    gl.clearDepth(100.0);
+    gl.clearDepth(1.0);
     
     gl.enable(gl.DEPTH_TEST);
-    //gl.enable(gl.CULL_FACE);
     gl.depthFunc(gl.LEQUAL);
-    gl.blendEquation(gl.FUNC_SUBTRACT);
-	//gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
-    //gl.blendFunc(gl.SRC_ALPHA_SATURATE, gl.ONE);
+
   
     //Creates and sets up the camera location
     camera = new Camera(CAMERA_ORBITING_TYPE);

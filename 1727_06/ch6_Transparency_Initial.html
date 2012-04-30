@@ -91,19 +91,14 @@ void main(void)
 		vec3 N = normalize(vNormal);
 
     	//Lambert's cosine law
-    	float lambertTerm	= dot(N,-L);
+    	float lambertTerm	= clamp(dot(N,-L),0.0,1.0);
 		
     	//Ambient Term  
     	vec4 Ia = uLightAmbient * uMaterialAmbient;
 
     	//Diffuse Term
-    	vec4 Id = vec4(0.0,0.0,0.0,1.0);
+		vec4 Id = uLightDiffuse * uMaterialDiffuse * lambertTerm; 
 		
-    	//Specular Term
-		if (lambertTerm > 0.0){
-			Id = uLightDiffuse * uMaterialDiffuse * lambertTerm; 
-		}			
-
 	   	gl_FragColor = vec4(Ia.rbg + Id.rgb,uMaterialDiffuse.a);
     }
 
