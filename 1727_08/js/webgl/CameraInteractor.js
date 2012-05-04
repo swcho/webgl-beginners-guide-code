@@ -37,21 +37,21 @@ CameraInteractor.prototype.setPicker = function(p){
 CameraInteractor.prototype.get2DCoords = function(ev){
 	var x, y, top = 0, left = 0, obj = this.canvas;
 
-	while (obj && obj.tagName != 'BODY') {
+	while (obj && obj.tagName !== 'BODY') {
 		top += obj.offsetTop;
 		left += obj.offsetLeft;
 		obj = obj.offsetParent;
 	}
     
     left += window.pageXOffset;
-    top  += window.pageYOffset;
+    top  -= window.pageYOffset;
  
 	// return relative mouse position
 	x = ev.clientX - left;
 	y = c_height - (ev.clientY - top); //c_height is a global variable that we maintain in codeview.js
                                        //this variable contains the height of the canvas and it updates dynamically
                                        //as we resize the browser window.
-	
+	//console.info('x='+x+', y='+y);
 	return {x:x,y:y};
 }
 
@@ -102,7 +102,7 @@ CameraInteractor.prototype.onMouseMove = function(ev){
 	var dy = this.y - this.lastY;
     
     if (this.picking && this.picker.moveCallback){
-        this.picker.moveCallback(this,dx,dy);
+        this.picker.moveCallback(this.picker.plist,this,dx,dy);
         return;
     }
 	

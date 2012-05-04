@@ -25,6 +25,20 @@ WebGLApp.prototype.run = function(){
         
         WEBGLAPP_RENDER = this.drawSceneHook;
         
+        function renderLoop(){
+            WEBGLAPP_TIMER_ID = setInterval(WEBGLAPP_RENDER, WEBGLAPP_RENDER_RATE);
+        }
+
+        window.onblur = function(){
+            clearInterval(WEBGLAPP_TIMER_ID);
+            console.info('Rendering stopped');
+        }
+
+        window.onfocus = function(){
+            renderLoop();
+            console.info('Rendering resumed');
+        }
+        
         renderLoop();
  }
  
@@ -35,17 +49,5 @@ WebGLApp.prototype.run = function(){
     if (WEBGLAPP_RENDER) WEBGLAPP_RENDER();
  }
      
-renderLoop = function(){
-     WEBGLAPP_TIMER_ID = setInterval(WEBGLAPP_RENDER, WEBGLAPP_RENDER_RATE);
-}
 
-window.onblur = function(){
-    clearInterval(WEBGLAPP_TIMER_ID);
-    console.info('Rendering stopped');
-}
-
-window.onfocus = function(){
-    renderLoop();
-    console.info('Rendering resumed');
-}
 

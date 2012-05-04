@@ -15,17 +15,27 @@ function Picker(canvas){
     
 };
 
+Picker.prototype.update = function(){
+
+    var width = this.canvas.width;
+    var height = this.canvas.height;
+   
+	gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+	
+	//2. Init Render Buffer
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderbuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, width, height);
+}
+
 Picker.prototype.configure = function(){
 
-	var width = 512*4;
-	var height = 512*2;
+	var width = this.canvas.width;
+	var height = this.canvas.height;
 	
 	//1. Init Picking Texture
 	this.texture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, this.texture);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-    gl.generateMipmap(gl.TEXTURE_2D);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 	
 	//2. Init Render Buffer
@@ -71,6 +81,8 @@ Picker.prototype.find = function(coords){
         if (ob.alias == 'floor') continue;
                 
         var property  = this.hitPropertyCallback(ob);
+        
+        if (property == undefined) continue;
     
         if (this._compare(readout, property)){
             var idx  = this.plist.indexOf(ob);

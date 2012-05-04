@@ -1,6 +1,6 @@
 var cview = new CodeViewer();
 
-$(window).resize(function(){cview.updateCanvasSize();});
+$(window).resize(function(){cview.updateCanvasSize(); if (picker) {picker.update();}});
 
 function CodeViewer(){
 	this.code = [];
@@ -239,6 +239,8 @@ CodeViewer.prototype.execute = function(){
 	this.updateGUI();
  	
 	this.loadSource(0);
+    
+    if (picker) picker.update();
 	
 }
 

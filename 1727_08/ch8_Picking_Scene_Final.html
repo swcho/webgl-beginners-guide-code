@@ -177,10 +177,10 @@ function configure(){
     
     //Scene Picker
     picker = new Picker(canvas);
-    picker.processHitsCallback = processHits;
+    picker.hitPropertyCallback = hitProperty;
     picker.addHitCallback      = addHit;
     picker.removeHitCallback   = removeHit;
-    picker.hitPropertyCallback = hitProperty;
+    picker.processHitsCallback = processHits;
     picker.moveCallback        = movePickedObjects;
     
     //Creates and sets up the mouse and keyboard interactor
@@ -225,7 +225,7 @@ function configure(){
     gl.uniform1f(Program.uAlpha, 1.0);
 }
 
-function generatePosition(){    
+function positionGenerator(){    
     var x = Math.floor(Math.random()*60);
     var y = 0;
     var z = Math.floor(Math.random()*60);
@@ -237,6 +237,32 @@ function generatePosition(){
     return [x,y,z];
 }
 
+var colorset = {};
+function objectLabelGenerator(){
+    var color = [Math.random(), Math.random(),Math.random(),1.0];
+    var key = color[0] + ':' + color[1] + ':' + color[2];
+
+    if (key in colorset){
+        return uniqueColorGenerator();
+    }
+    else {
+        colorset[key] = true;
+        return color;
+    }
+}
+
+
+function diffuseColorGenerator(i){
+    var c = (i % 30 / 60) + 0.3;
+    
+    return [c,c,c,1];
+}
+
+function scaleGenerator() {
+    var f = Math.random()+0.3; 
+    return [f, f, f];
+}
+
 /**
 * Loads the scene
 */
@@ -244,38 +270,21 @@ function load(){
     Floor.build(80,5);
     Floor.pcolor = [0.0,0.0,0.0,1.0];
     Scene.addObject(Floor);
-    var pos = [];   //position
-    var dif = [];   //diffuse color
-    var sca = [];   //scale
-    var pcol = [];  //picking color
-    var f = 1.0;    //factor
-    var type = 0;
+    
+    var positionValue, scaleFactor, objectLabel, objectType, diffuseColor; 
+
     for (var i = 0; i < 100; i++){
-        pos = generatePosition();
-        f = Math.random()+0.1; dif = [f, f, f, 1.0];
-        f = Math.random()+0.3; sca = [f, f, f];
-        pcol = [Math.random(), Math.random(),Math.random(),1.0];
-        type = Math.floor(Math.random()*2);
-        switch (type){
-            case 1: Scene.loadObject('models/geometry/sphere.json',   'ball_'+i, {position:pos,scale:sca, diffuse:pcol, pcolor:pcol}); break;
-            case 0: Scene.loadObject('models/geometry/cylinder.json',   'cylinder_'+i, {position:pos,scale:sca, diffuse:pcol, pcolor:pcol}); break;
+        positionValue   = positionGenerator();
+        objectLabel     = objectLabelGenerator();
+        scaleFactor     = scaleGenerator();
+        diffuseColor    = diffuseColorGenerator(i);
+        objectType = Math.floor(Math.random()*2);
+
+        switch (objectType){
+            case 1: Scene.loadObject('models/geometry/sphere.json',   'ball_'+i,     {position:positionValue,scale:scaleFactor, diffuse:diffuseColor, pcolor:objectLabel}); break;
+            case 0: Scene.loadObject('models/geometry/cylinder.json', 'cylinder_'+i, {position:positionValue,scale:scaleFactor, diffuse:diffuseColor, pcolor:objectLabel}); break;
         }
    }
-}
-
-
-
-
-function render(){
-
-    //off-screen rendering
-    gl.bindFramebuffer(gl.FRAMEBUFFER, picker.framebuffer);
-    gl.uniform1i(Program.uOffscreen, true);
-    draw();
-    //on-screen rendering
-    gl.uniform1i(Program.uOffscreen, showPickingImage);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    draw();
 }
 
 function hitProperty(ob){
@@ -291,52 +300,57 @@ function addHit(ob){
 function removeHit(ob){
     ob.diffuse = ob.previous.slice(0);
     render();
-
 }
 
 function processHits(hits){
+    var ob;
     for(var i = 0; i < hits.length; i++){
-        var ob = hits[i];
+        ob = hits[i];
         ob.diffuse = ob.previous;
-        Scene.removeObject(ob.alias);
+       // Scene.removeObject(ob.alias);
     }
     render();
 }
 
-function movePickedObjects(interactor,dx,dy){
+function movePickedObjects(hits,interactor,dx,dy){
     
-    if (picker.plist.length == 0) return;
+    if (hits == 0) return;
     
     var camera = interactor.camera;
-    var depth = (interactor.alt!=0);
-    
-    for (var i = 0, max = picker.plist.length; i < max; i+=1){
-        var ob = this.plist[i];
-        var pos = vec3.create([ob.position[0], ob.position[1], ob.position[2]]);
+    var depth =  interactor.alt;
+    var factor = Math.max(Math.max(camera.position[0], camera.position[1]), camera.position[2])/1000;
+    var  scaleX, scaleY;
+    for (var i = 0, max = hits.length; i < max; i+=1){
+
+        scaleX = vec3.create();
+        scaleY = vec3.create();
         
-        var scaleY = vec3.create();
-        var scaleX = vec3.create();
-        
-        var factor = Math.max(Math.max(camera.position[0], camera.position[1]), camera.position[2])/1000;
-       
-        if (!depth){
-            vec3.scale(camera.up,   -dy * factor, scaleY);
-            vec3.scale(camera.right, dx * factor, scaleX);
-        }
-        else{
+        if (depth){
             vec3.scale(camera.normal, dy * factor, scaleY);
         }
+        else{
+            vec3.scale(camera.up,    -dy * factor, scaleY);
+            vec3.scale(camera.right,  dx * factor, scaleX);
+        }
 
-        vec3.add(pos, scaleY);
-        vec3.add(pos, scaleX);
-        
-        ob.position[0] = pos[0];
-        ob.position[1] = pos[1];
-        ob.position[2] = pos[2];
+        vec3.add(hits[i].position, scaleY);
+        vec3.add(hits[i].position, scaleX);
+
     }
     render();
 }
 
+function render(){
+
+    //off-screen rendering
+    gl.bindFramebuffer(gl.FRAMEBUFFER, picker.framebuffer);
+    gl.uniform1i(Program.uOffscreen, true);
+    draw();
+    //on-screen rendering
+    gl.uniform1i(Program.uOffscreen, showPickingImage);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    draw();
+}
 
 /**
 * invoked on every rendering cycle
