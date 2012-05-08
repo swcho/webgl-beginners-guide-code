@@ -176,7 +176,10 @@ function configure(){
     
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); 
 
+    
   
     //Creates and sets up the camera location
     camera = new Camera(CAMERA_ORBITING_TYPE);
@@ -260,7 +263,6 @@ function configure(){
     gl.uniform3fv(Program.uKs ,     [1.0,1.0,1.0]);
     
     gl.uniform1f(Program.uNs, 1.0);
-    gl.uniform1f(Program.uNi, 1.0);
     gl.uniform1i(Program.uTranslateLights, translateLights);
 
 }
@@ -269,7 +271,6 @@ function loadBMW(){
     Scene.objects = [];
     Scene.addObject(Floor);
     for(var i = 1; i <= 24; i+=1){
-        //if (i == 5) continue;
         Scene.loadObject('models/cars/bmw/part'+i+'.json');
 
     }
@@ -327,7 +328,7 @@ function loadNissan(){
     }
 }
 
-
+var selectedCar;
 function load(){
     Floor.build(80,2);
     Floor.Ka = [1,1,1];
@@ -342,7 +343,7 @@ function load(){
     
     Scene.addObject(Floor);
     loadBMW();
-
+    selectedCar = 'bmwi8';
 }
 
 function render(){
@@ -373,19 +374,19 @@ function render(){
             gl.uniform3fv(Program.uKa, object.Ka);
             gl.uniform3fv(Program.uKd, object.Kd);
             gl.uniform3fv(Program.uKs, object.Ks);
-            gl.uniform1f(Program.uNi, object.Ni);
             gl.uniform1f(Program.uNs, object.Ns);
             gl.uniform1f(Program.d, object.d);
             gl.uniform1i(Program.illum, object.illum);
             
-           //if(object.d < 1.0) {
-				//gl.disable(gl.DEPTH_TEST);
-				//gl.enable(gl.BLEND);
-                //gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
-			//} else {
-			//	gl.enable(gl.DEPTH_TEST);
-			 //   gl.disable(gl.BLEND);
-			//}
+           if(object.d < 1.0){  //tweaking parameters here
+                switch(selectedCar){
+                    case 'bmwv3': gl.uniform1f(Program.d, 0.14); break;
+                    case 'audi' : gl.uniform1f(Program.d, 0.8); break;
+                    case 'mustang': gl.uniform1f(Program.d, 0.3); break;
+                    case 'bmwi8': break; //nothing to do here
+                }
+			}
+           
             
             gl.bindBuffer(gl.ARRAY_BUFFER, object.vbo);
             gl.vertexAttribPointer(Program.aVertexPosition, 3, gl.FLOAT, false, 0, 0);
@@ -429,7 +430,7 @@ function resizeCanvas(){
 
 $(window).resize(function(){resizeCanvas();});
 
-var app = undefined;
+var app;
 function runShowRoom(){
     app = new WebGLApp("the-canvas");
     app.configureGLHook = configure;
@@ -453,10 +454,10 @@ function runShowRoom(){
     <tr><td colspan=3><h3>Car</h3></td></tr>
     <tr><td width='40%'> Select the car to load: </td><td colspan='2' width='60%'>
         <select id='select-car' >
-                    <option value ='opt-bmwi8'> BMW I8</option>
-                    <option value ='opt-mustang'> Ford Mustang </option>
-                    <option value ='opt-audi'> Audi R8 </option>
-                    <option value ='opt-bmwv3'> BMW v3 </option>
+                    <option value ='bmwi8'> BMW I8</option>
+                    <option value ='mustang'> Ford Mustang </option>
+                    <option value ='audi'> Audi R8 </option>
+                    <option value ='bmwv3'> BMW v3 </option>
         </select>
         </td>
     </tr>
@@ -549,7 +550,7 @@ function runShowRoom(){
 <script type='text/javascript'>resizeCanvas();</script>
 <script type='text/javascript'>
     $('#opt-pose').buttonset();
-    $('#slider-shininess').slider({value:0.0, min:0.0, max:1.0, step:0.1, slide:function(event, ui){updateShininess(ui)}, change:function(event,ui){updateShininess(ui)}});
+    $('#slider-shininess').slider({value:0.0, min:0.0, max:1.0, step:0.1, slide:function(event, ui){updateShininessSelectedCar(ui)}, change:function(event,ui){updateShininessSelectedCar(ui)}});
     $('#slider-la1').slider({value:0.0, min:0.0, max:1.0, step:0.1, slide:function(){updateLightProperty(1, 'a')}, change:function(){updateLightProperty(1,'a')}});
     $('#slider-ld1').slider({value:0.4, min:0.0, max:1.0, step:0.1, slide:function(){updateLightProperty(1, 'd')}, change:function(){updateLightProperty(1,'d')}});
     $('#slider-ls1').slider({value:0.8, min:0.0, max:1.0, step:0.1, slide:function(){updateLightProperty(1, 's')}, change:function(){updateLightProperty(1,'s')}});
@@ -563,16 +564,18 @@ function runShowRoom(){
     $('#slider-ld4').slider({value:0.4, min:0.0, max:1.0, step:0.1, slide:function(){updateLightProperty(4, 'd')}, change:function(){updateLightProperty(4,'d')}});
     $('#slider-ls4').slider({value:0.8, min:0.0, max:1.0, step:0.1, slide:function(){updateLightProperty(4, 's')}, change:function(){updateLightProperty(4,'s')}});
 
+
 $('#select-car').change(function(){
-    var val = $('#select-car').val();
-    switch (val){
-        case 'opt-bmwi8'    :loadBMW();     break;
-        case 'opt-mustang'  :loadMustang(); break;
-        case 'opt-audi'     :loadAudi();    break;
-        case 'opt-bmwv3'    :loadBMWV3();   break;
+    selectedCar = $('#select-car').val();
+    switch (selectedCar){
+        case 'bmwi8'    :loadBMW();     break;
+        case 'mustang'  :loadMustang(); break;
+        case 'audi'     :loadAudi();    break;
+        case 'bmwv3'    :loadBMWV3();   break;
     }
         
-});    
+});  
+  
 $('#show-floor').change(function(){
 	    floorVisible = !floorVisible;
         Floor.visible = floorVisible;
@@ -583,12 +586,18 @@ $('#translate-lights').change(function(){
     gl.uniform1i(Program.uTranslateLights, translateLights);
 });
 
-function updateShininess(ui){
-    $('#slider-shininess-value').html(ui.value);
-    var object = Scene.getObject('Shell_Mesh.023_Body');
-        if (object != null){
-            object.Ks = [ui.value, ui.value, ui.value];
+function updateShininessSelectedCar(shine){
+
+    $('#slider-shininess-value').html(shine.value);
+    
+
+    for(var i = 0, N = Scene.objects.length; i < N; i+=1){
+        for(var j =0; j <3; j+=1){
+        Scene.objects[i].Ks[j] = shine.value;
+        }
     }
+    app.refresh();
+   
 }
 
 function updateLightProperty(index,property){
@@ -617,8 +626,38 @@ function updateLightProperty(index,property){
     render();
 }
 
+function updateColorSelectedCar(color){
+    var parts = [];
+    switch(selectedCar){
+        case 'bmwv3': parts.push(Scene.getObject('Shell_Mesh.023_Body'));
+                  break;
+        case 'mustang': for(var i=0, N = Scene.objects.length; i < N; i+=1){
+                            if (Scene.objects[i].alias.indexOf('_pintura_carro') != -1){
+                                parts.push(Scene.objects[i]);
+                            }
+                        }
+                        break;
+        case 'audi': for(var i=0, N = Scene.objects.length; i < N; i+=1){
+                            if (Scene.objects[i].alias.indexOf('_Lack') != -1){
+                                parts.push(Scene.objects[i]);
+                            }
+                        }
+                        break;
+        case 'bmwi8': for(var i=0, N = Scene.objects.length; i < N; i+=1){
+                            if (Scene.objects[i].alias.indexOf('_BMW') != -1){
+                                parts.push(Scene.objects[i]);
+                            }
+                        }
+                        break;
+    }
+    var object;
+    for(var i = 0, N = parts.length; i < N; i+=1){
+        parts[i].Kd = color;
+    }
+    app.refresh();
+};
 
-
+var carColorHex = '#ffffff';
 $('#carColor').ColorPicker({
     onSubmit: function(hsb, hex, rgb, el) {
             $(el).val(hex);
@@ -635,16 +674,13 @@ $('#carColor').ColorPicker({
         return false;
     },
     onChange: function (hsb, hex, rgb) {
+        carColorHex = hex;
         $('#carColor div').css('backgroundColor', '#' + hex);
-        var object = Scene.getObject('Shell_Mesh.023_Body');
-        if (object != null){
-            object.Kd = [rgb.r/256,rgb.g/256,rgb.b/256];
-        }
-        
+        updateColorSelectedCar([rgb.r/256,rgb.g/256,rgb.b/256]);
     },
     
     onBeforeShow: function (colpkr) {
-            $(this).ColorPickerSetColor('rgb(0.5,0.8,0.1)');
+            $(this).ColorPickerSetColor(carColor);
         }
     });
 
