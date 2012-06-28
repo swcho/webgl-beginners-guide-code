@@ -1,7 +1,7 @@
 <html>
 
 <head>
-<title>WebGL Beginner's Guide - Chapter 5 - Simple Animation</title>
+<title>WebGL Beginner's Guide - Chapter 5 - Global vs Local Transformations</title>
 <meta http-equiv='content-type' content='text/html; charset=ISO-8859-1'>
 
 <!-- CSS Styles //-->
@@ -273,9 +273,7 @@ var dx_cone = 0.15;
 var pos_sphere = 0;
 var pos_cone = 0;
 
-var animationRate = 30;
-var simulationRate = 300;
- 
+var frequency = 5; 
 var elapsedTime = undefined;
 var initialTime = undefined;
 
@@ -289,25 +287,24 @@ function animate(){
     if (pos_cone >= 35 || pos_cone <=-35){
     	dx_cone = -dx_cone;
     }
-	
+	draw();
 }
 
 function onFrame(){
     elapsedTime = (new Date).getTime() - initialTime;
-    if (elapsedTime < animationRate) return; //come back later!
+    if (elapsedTime < frequency) return; //come back later!
     
-    var steps = Math.floor(elapsedTime / simulationRate);
+    var steps = Math.floor(elapsedTime / frequency);
     while(steps > 0){
         animate();
         steps -= 1;
     }
-	draw();
     initialTime = (new Date).getTime();
 }
 
 function startAnimation(){
     initialTime = (new Date).getTime();
-	setInterval(onFrame,animationRate/1000);
+	setInterval(onFrame,frequency/1000);
 }
 
 
@@ -331,7 +328,7 @@ function runWebGLApp() {
 <body onLoad='runWebGLApp()'>
 <div id='top'>
 <h1>WebGL Beginner's Guide - Chapter 5</h1>
-<h2>Simple Animation</h2>
+<h2>Global vs Local Transformations</h2>
 <div id='logo-packt'><img src='packt.gif'/></div>
 <p></p>
 </div>
