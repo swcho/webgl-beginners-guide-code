@@ -659,7 +659,7 @@ $("#selSource").change(function (event) {
     },
     
     onBeforeShow: function (colpkr) {
-   $(this).ColorPickerSetColor(blendingColorHex);
+   $(colpkr).ColorPickerSetColor(blendingColorHex);
   }
  });
  
@@ -670,7 +670,7 @@ $("#selSource").change(function (event) {
    $(el).ColorPickerHide();
    
  },
- color: '#00FFFF',
+ color: '#B606AE',
     onShow: function (colpkr) {
         $(colpkr).fadeIn(500);
         return false;
@@ -687,8 +687,8 @@ $("#selSource").change(function (event) {
     },
     
 
-   onBeforeShow: function () {
-		$(this).ColorPickerSetColor(sphereColor);
+   onBeforeShow: function (colpkr) {
+		$(colpkr).ColorPickerSetColor(sphereColor);
 	}
 
  });
@@ -699,7 +699,7 @@ $("#selSource").change(function (event) {
    $(el).ColorPickerHide();
    
  },
- color: '#B606AE',
+ color: '#00FFFF',
     onShow: function (colpkr) {
         $(colpkr).fadeIn(500);
         return false;
@@ -715,8 +715,8 @@ $("#selSource").change(function (event) {
         updateObjectColor('cone', c );
     },
     
-    onBeforeShow: function () {
-		$(this).ColorPickerSetColor(coneColor);
+    onBeforeShow: function (colpkr) {
+		$(colpkr).ColorPickerSetColor(coneColor);
 	}
  });
 

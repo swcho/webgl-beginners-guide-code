@@ -264,15 +264,38 @@ function runWebGLApp() {
 
 <div id='bottom'>
 <table>
+<tr>
+<td>
+<table>
+  <caption>Light Direction</caption>
   <tr>
    <td>X:</td><td id='slider-x-value' width='30px' align='center'>0.0</td><td width='150px'><div id='slider-x'/></td>
-   <td colspan=2> Sphere Color (Material Diffuse Term:</td><td><div id='colorSelectorSphere' class='colorSelector'><div style='background-color:rgb(128,204,26)'></div></div></td>
+  </tr>
+  <tr>
+   <td>Y:</td> <td id='slider-y-value'  width='30px' align='center'>-1.0</td><td width='150px'><div id='slider-y'/></td>
   </tr>
   <tr>
    <td>Z:</td> <td id='slider-z-value'  width='30px' align='center'>-1.0</td><td width='150px'><div id='slider-z'/></td>
-   <td align='right'>Light Diffuse Term:</td><td id='slider-ld-value'  width='30px'>1.0</td><td width='150px' colspan='3'><div id='slider-ld'/></td>
   </tr>
  </table>
+</td>
+<td>
+   <table>
+   <tr>
+             <td colspan="2"> Sphere Color (Material Diffuse Term:</td>
+             <td>
+                  <div id='colorSelectorSphere' class='colorSelector'><div style='background-color:rgb(128,204,26)'></div></div>
+             </td>
+    </tr>
+    <tr>
+         <td align='right'>Light Diffuse Term:</td>
+         <td id='slider-ld-value'  width='30px'>1.0</td>
+         <td width='150px' colspan='3'><div id='slider-ld'/></td>
+     </tr>
+    </table>
+</td>
+</tr>
+</table>
 </div>
 <script>cview.run(cview.MODE_VIEW_AND_CONTROLS);</script>
 <script>
@@ -327,7 +350,7 @@ $('#colorSelectorSphere').ColorPicker({
     },
     
     onBeforeShow: function (colpkr) {
-   $(this).ColorPickerSetColor('rgb(0.5,0.8,0.1)');
+   $(colpkr).ColorPickerSetColor('rgb(0.5,0.8,0.1)');
   }
  })
 
