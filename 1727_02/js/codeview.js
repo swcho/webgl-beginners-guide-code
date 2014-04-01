@@ -4,7 +4,7 @@ function CodeViewer(){
 	this.code = [];
 	this.TIMER = 0;
 	this.WAIT = 1000;
-}
+};
 
 CodeViewer.prototype.loadSource = function(idx){
 	
@@ -15,7 +15,7 @@ CodeViewer.prototype.loadSource = function(idx){
 		c.innerHTML = this.code[idx];
 		$('#codeContainer').append(c);
 	}
-}
+};
 
 CodeViewer.prototype.updateGUI = function(){
 	$('#canvasContainer').before("<pre id='codeContainer' class='prettyprint linenums'><code id='codeArea'></code></pre>");
@@ -51,21 +51,24 @@ CodeViewer.prototype.updateGUI = function(){
                 $('canvas').attr('width',c_width);
                 $('canvas').attr('height',c_height);
                 console.info(c_width+'x'+c_height);
-            })
+            });
     
-}
+};
 
 
 CodeViewer.prototype.run = function(){
 	$('#canvasContainer').before("<pre id='codeContainer' class='prettyprint linenums'><p class='wait'>One moment please. Loading source code ...</p></pre>");
 	this.TIMER = setInterval((function(self) {return function() {self.execute();}})(this),this.WAIT);
-}
+};
 
 CodeViewer.prototype.execute = function(){
 	if(this.TIMER) clearInterval(this.TIMER);
 	this.code[0] = window.prettyPrintOne($('#code-js').html(),'js',true);
 	this.code[1] = window.prettyPrintOne($('#shader-vs').html(),'js',true);
 	this.code[2] = window.prettyPrintOne($('#shader-fs').html(),'js',true);
+	//this.code[0] = $('#code-js').html();
+	//this.code[1] = $('#shader-vs').html();
+	//this.code[2] = $('#shader-fs').html();
 	$('#codeContainer').remove();
     $('#cview').remove();
 	var html = $(document.body).html().replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -73,6 +76,6 @@ CodeViewer.prototype.execute = function(){
 	this.code[3] = window.prettyPrintOne(html,'html',true);
     this.updateGUI();
 	this.loadSource(0);
-}
+};
 
 

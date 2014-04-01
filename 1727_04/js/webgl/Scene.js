@@ -24,7 +24,7 @@ var Scene = {
                     Scene.addObject(o);
                 }
             }
-        }
+        };
         request.send();
     },
     
@@ -78,5 +78,5 @@ var Scene = {
          else {
             console.info(object.alias + ' has been added to the scene [Local]');
          }
-    } 
-}
+    }
+};
