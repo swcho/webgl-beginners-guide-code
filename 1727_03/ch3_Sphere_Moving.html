@@ -22,6 +22,7 @@ attribute vec3 aVertexPosition;
 attribute vec3 aVertexNormal;
 
 uniform mat4 uMVMatrix;
+uniform mat4 uMVMatrixObject;
 uniform mat4 uPMatrix;
 uniform mat4 uNMatrix;
 
@@ -54,7 +55,7 @@ void main(void) {
 	vFinalColor.a = 1.0;
     
 	//transformed vertex position
-    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    gl_Position = uPMatrix * uMVMatrixObject * vec4(aVertexPosition, 1.0);
 }
 </script>
 
@@ -79,6 +80,7 @@ var c_width = 0; // Variable to store the width of the canvas
 var c_height = 0; // Variable to store the height of the canvas
 
 var mvMatrix = mat4.create(); // The Model-View matrix
+var mvMatrixObject = mat4.create(); // The Model-View matrix for object
 var pMatrix = mat4.create(); // The projection matrix
 
 /*-----------------------------------------------------*/
@@ -127,6 +129,7 @@ function initProgram() {
 	
 	prg.uPMatrix   		 = gl.getUniformLocation(prg, "uPMatrix");
 	prg.uMVMatrix  	     = gl.getUniformLocation(prg, "uMVMatrix");
+	prg.uMVMatrixObject  = gl.getUniformLocation(prg, "uMVMatrixObject");
 	prg.uNMatrix         = gl.getUniformLocation(prg, "uNMatrix");
 	
 	prg.uMaterialDiffuse     = gl.getUniformLocation(prg, "uMaterialDiffuse");
@@ -138,7 +141,7 @@ function initProgram() {
 
 
 function initLights(){
-	gl.uniform3f(prg.uLightDirection,   0.0, -1.0, -1.0);
+	gl.uniform3f(prg.uLightDirection,   -0.5, 0.0, 0.0);
 	gl.uniform4f(prg.uLightAmbient,     0.2,0.2,0.2,1.0);
 	gl.uniform4f(prg.uLightDiffuse,     0.5,0.5,0.5,1.0);	
     gl.uniform4f(prg.uMaterialDiffuse,  0.5,0.8,0.1,1.0);
@@ -181,16 +184,20 @@ function drawScene() {
 	gl.viewport(0, 0, c_width, c_height);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	mat4.perspective(45, c_width / c_height, 0.1, 10000.0, pMatrix);
     
     mat4.identity(mvMatrix);
     mat4.translate(mvMatrix, [0.0, 0.0, -1.5]); //Sets the camera to a reasonable distance to view the part
-    mat4.rotate(mvMatrix, angle * Math.PI / 180, [0, 1, 0]);	
-    
+    mat4.rotate(mvMatrix, angle * Math.PI / 180, [0, 0, 1]);	
     gl.uniformMatrix4fv(prg.uMVMatrix, false, mvMatrix);
+
+    mat4.identity(mvMatrixObject);
+    mat4.translate(mvMatrixObject, [0.0, 0.0, -1.5]); //Sets the camera to a reasonable distance to view the part
+    gl.uniformMatrix4fv(prg.uMVMatrixObject, false, mvMatrixObject);
+
+	mat4.perspective(45, c_width / c_height, 0.1, 10000.0, pMatrix);
 	gl.uniformMatrix4fv(prg.uPMatrix, false, pMatrix);
 	
-    mat4.set(mvMatrix, nMatrix);
+    mat4.set(mvMatrixObject, nMatrix);
     mat4.inverse(nMatrix);
     mat4.transpose(nMatrix);
     
